@@ -101,13 +101,13 @@ if __name__ == '__main__':
     kv1, kv2 = 300, 50
     ki1, ki2 = 100, 70
 
-    q1, q2 = 0.0    # 初期角度
-    dot_q1, dot_q2 = 0.0
-    ddot_q1, ddot_q2 = 0.0
-    sum_q1, sum_q2 = 0.0
+    q1, q2 = 0.0, 0.0    # 初期角度
+    dot_q1, dot_q2 = 0.0, 0.0
+    ddot_q1, ddot_q2 = 0.0, 0.0
+    sum_q1, sum_q2 = 0.0, 0.0
 
     qd1, qd2 = radians(30), radians(45)   # 目標角度
-    dot_qd1, dot_qd2 = 0.0
+    dot_qd1, dot_qd2 = 0.0, 0.0
 
     count_time = 10      # シミュレート時間
     sampling_time = 0.0001  # サンプリングタイム
@@ -115,16 +115,16 @@ if __name__ == '__main__':
     link1_log = []
     link2_log = []
 
-    ST = simulation_time(count_time, sampling_time)
+    ST = int(simulation_time(count_time, sampling_time))
 
-    f = open('2dof_simulation.csv', 'ab')
-    dataWriter = csv.writer(f)
+    f = open('2dof_simulation.csv', 'w')
+
     Parameters = ['Time[s]', 'q1', 'q2', 'qd1', 'qd2',
                   'dot_q1', 'dot_q2', 'ddot_q1', 'ddot_q2']
-    dataWriter.writerow(Parameters)
+    f.write('Time[s], q1, q2, qd1, qd2, dot_q1, dot_q2, ddot_q1, ddot_q2\n')
     rowList = []
 
-    for i in ST:
+    for i in range(ST):
 
         time = i*sampling_time
         q1, q2, dot_q1, dot_q2 = EulerMethod(q1, q2, dot_q1, dot_q2,
@@ -150,10 +150,11 @@ if __name__ == '__main__':
         sum_q1 += sum_angle_difference(qd1, q1, sampling_time)
         sum_q2 += sum_angle_difference(qd2, q2, sampling_time)
 
-        rowList.append([])
-        data_set = [time, degrees(q1), degrees(q2), degrees(qd1), degrees(qd2),
-                    dot_q1, dot_q2, ddot_q1, ddot_q2]
-        rowList.append(data_set)
-        dataWriter.writerows(rowList)
+        row = "{}, {}, {}, {}, {}, {}, {}, {}, {}\n". format(time,
+                                                             degrees(q1), degrees(q2),
+                                                             degrees(qd1), degrees(qd2),
+                                                             dot_q1, dot_q2,
+                                                             ddot_q1, ddot_q2)
+        f.write(row)
 
     f.close()
