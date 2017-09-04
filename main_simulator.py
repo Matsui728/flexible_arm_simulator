@@ -8,8 +8,7 @@ Created on Thu Aug 31 15:53:58 2017
 import numpy as np
 import matplotlib.pyplot as plt
 from math import sin, cos, degrees, radians
-
-import csv
+import tqdm
 
 
 def PIDcontrol(kp, kv, ki, qd, q, dot_qd, dot_q, sum_q):
@@ -85,6 +84,33 @@ def simulation_time(count_time, sampling_time):
     return simulation_time
 
 
+def save_log(x_data, x_data_log):
+    x_data_log.append(x_data)
+
+    return x_data_log
+
+
+def print_graph(title_name1, label_name1, x1_data, y1_data,
+                title_name2, label_name2, x2_data, y2_data):
+    # グラフの表示
+
+    plt.figure(figsize=(9, 3))
+    plt.subplot(1, 2, 1)
+    plt.title('title_name1')
+    plt.plot(x1_data, y1_data, label='label_name1')
+    plt.legend()
+    plt.grid()
+
+
+    plt.subplot(1, 2, 2)
+    plt.title('title_name2')
+    plt.plot(x2_data, y2_data, label='label_name2')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__ == '__main__':
     # Parameters
     m1, m2 = 5.0, 5.0  # 質量
@@ -112,7 +138,13 @@ if __name__ == '__main__':
     count_time = 10      # シミュレート時間
     sampling_time = 0.0001  # サンプリングタイム
 
-    link1_log = []
+    time_log = []
+    deg1 = []
+    deg2 = []
+    dot_deg1 = []
+    dot_deg2 = []
+    ddot_deg1 = []
+    ddot_deg2 = []
     link2_log = []
 
     ST = int(simulation_time(count_time, sampling_time))
@@ -122,7 +154,7 @@ if __name__ == '__main__':
     Parameters = ['Time[s]', 'q1', 'q2', 'qd1', 'qd2',
                   'dot_q1', 'dot_q2', 'ddot_q1', 'ddot_q2']
     f.write('Time[s], q1, q2, qd1, qd2, dot_q1, dot_q2, ddot_q1, ddot_q2\n')
-    rowList = []
+    row_data = []
 
     for i in range(ST):
 
@@ -150,11 +182,34 @@ if __name__ == '__main__':
         sum_q1 += sum_angle_difference(qd1, q1, sampling_time)
         sum_q2 += sum_angle_difference(qd2, q2, sampling_time)
 
+
+
         row = "{}, {}, {}, {}, {}, {}, {}, {}, {}\n". format(time,
                                                              degrees(q1), degrees(q2),
                                                              degrees(qd1), degrees(qd2),
                                                              dot_q1, dot_q2,
                                                              ddot_q1, ddot_q2)
+
+        time_log = save_log(time, time_log)
+        deg1 = save_log(degrees(q1), deg1)
+        deg2 = save_log(degrees(q2), deg2)
+        dot_deg1 = save_log(dot_q1, dot_deg1)
+        dot_deg2 = save_log(dot_q2, dot_deg2)
+        ddot_deg1 = save_log(ddot_q1, ddot_deg1)
+        ddot_deg2 = save_log(ddot_q2, ddot_deg2)
+
+       #  print_graph(q1, q1, time_log, deg1, q2, q2, time_log, deg2)
+
         f.write(row)
+
+    plt.figure(figsize=(7, 3))
+    plt.title('Loss')
+    plt.plot(time_log, deg1, label='deg1')
+    plt.plot(time_log, deg2, label='deg2')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
 
     f.close()
