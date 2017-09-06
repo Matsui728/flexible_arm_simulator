@@ -7,7 +7,8 @@ Created on Wed Sep  6 15:26:55 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import sin, cos, degrees, radians
+from math import sin, cos, degrees, radians, pow
+import print_result as pr
 
 
 def PIDcontrol(kp, kv, ki, qd, q, dot_qd, dot_q, sum_q):
@@ -77,6 +78,55 @@ def moment_inertia(m, l):
     return moment
 
 
+def difference_part(theta, q):
+    e = (theta - q)
+
+    return e
+
+
+def non_linear_item(k1, k2, e):
+    K = k1 + k2*pow(e, 2)
+
+    return K
+
+
+def print_non_lineaar_Characteristics():
+    k1 = [0.001, 10]
+    k2 = [0.001, 0.005, 0.01]
+    x_data = []
+    y1_data = []
+    y2_data = []
+    y3_data = []
+    y4_data = []
+    for i in range(-100, 100, 1):
+        x = i
+        K1 = non_linear_item(k1[0], k2[0], x)
+        K2 = non_linear_item(k1[0], k2[1], x)
+        K3 = non_linear_item(k1[0], k2[2], x)
+        K4 = non_linear_item(k1[1], k2[0], x)
+
+        y1 = K1*x
+        y2 = K2*x
+        y3 = K3*x
+        y4 = K4*x
+
+        x_data.append(x)
+        y1_data.append(y1)
+        y2_data.append(y2)
+        y3_data.append(y3)
+        y4_data.append(y4)
+
+    yd = [y1_data, y2_data, y3_data, y4_data]
+    label_name = ["k1 = {}, k2 = {}". format(k1[0], k2[0]),
+                  "k1 = {}, k2 = {}". format(k1[0], k2[1]),
+                  "k1 = {}, k2 = {}". format(k1[0], k2[2]),
+                  "k1 = {}, k2 = {}". format(k1[1], k2[0])]
+    plt.figure(figsize=(7, 3))
+    pr.print_graph("Non Linear Characteristics",
+                   x_data, yd, label_name, "X", "K", 4)
+    plt.show()
+
+
 def simulation_time(count_time, sampling_time):
     simulation_time = count_time/sampling_time
 
@@ -90,4 +140,4 @@ def save_log(x_data, x_data_log):
 
 
 if __name__ == '__main__':
-    PIDcontrol()
+    print_non_lineaar_Characteristics()

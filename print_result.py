@@ -22,5 +22,6 @@ def print_graph(title_name, x_data, y_data,
     plt.grid()
     plt.tight_layout()
 
+
 if __name__ == '__main__':
     print_graph()
