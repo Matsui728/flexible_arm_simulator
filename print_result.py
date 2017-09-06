@@ -11,13 +11,13 @@ import matplotlib.pyplot as plt
 
 def print_graph(title_name, x_data, y_data,
                 label_name, xlabel_name, ylabel_name, num_plot_data=1):
-    plt.title(title_name)
+    plt.title(title_name, fontsize=15, fontname='Times New Roman')
 
     for i in range(num_plot_data):
         plt.plot(x_data, y_data[i-1], label=label_name[i-1])
 
-    plt.xlabel(xlabel_name, fontsize=15, fontname='serif')  # x軸のタイトル
-    plt.ylabel(ylabel_name, fontsize=15, fontname='serif')  # y軸のタイトル
+    plt.xlabel(xlabel_name, fontsize=15, fontname='Times New Roman')  # x軸のタイトル
+    plt.ylabel(ylabel_name, fontsize=15, fontname='Times New Roman')  # y軸のタイトル
     plt.legend()
     plt.grid()
     plt.tight_layout()
