@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import sin, cos, degrees, radians
 import tqdm
+import print_result as pr
 
 
 def PIDcontrol(kp, kv, ki, qd, q, dot_qd, dot_q, sum_q):
@@ -88,27 +89,6 @@ def save_log(x_data, x_data_log):
     x_data_log.append(x_data)
 
     return x_data_log
-
-
-def print_graph(title_name1, label_name1, x1_data, y1_data,
-                title_name2, label_name2, x2_data, y2_data):
-    # グラフの表示
-
-    plt.figure(figsize=(9, 3))
-    plt.subplot(1, 2, 1)
-    plt.title('title_name1')
-    plt.plot(x1_data, y1_data, label='label_name1')
-    plt.legend()
-    plt.grid()
-
-
-    plt.subplot(1, 2, 2)
-    plt.title('title_name2')
-    plt.plot(x2_data, y2_data, label='label_name2')
-    plt.legend()
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
 
 
 if __name__ == '__main__':
@@ -198,18 +178,15 @@ if __name__ == '__main__':
         ddot_deg1 = save_log(ddot_q1, ddot_deg1)
         ddot_deg2 = save_log(ddot_q2, ddot_deg2)
 
-       #  print_graph(q1, q1, time_log, deg1, q2, q2, time_log, deg2)
-
         f.write(row)
 
-    plt.figure(figsize=(7, 3))
-    plt.title('Loss')
-    plt.plot(time_log, deg1, label='deg1')
-    plt.plot(time_log, deg2, label='deg2')
-    plt.legend()
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
+    x_data = [time_log]
+    y_data = [deg1, deg2]
+    label_name = ['deg1', 'deg2']
 
+    plt.figure(figsize=(7, 3))
+    pr.print_graph("Link Angle", time_log, y_data,
+                   label_name, "Time[s]", "Angle[deg]", num_plot_data=2)
+    plt.show()
 
     f.close()
