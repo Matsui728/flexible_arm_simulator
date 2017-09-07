@@ -18,7 +18,7 @@ def print_graph(title_name, x_data, y_data,
 
     plt.xlabel(xlabel_name, fontsize=15, fontname='Times New Roman')  # x軸のタイトル
     plt.ylabel(ylabel_name, fontsize=15, fontname='Times New Roman')  # y軸のタイトル
-    plt.legend()
+    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
     plt.grid()
     plt.tight_layout()
 

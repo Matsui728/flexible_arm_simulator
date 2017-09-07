@@ -7,7 +7,7 @@ Created on Wed Sep  6 15:26:55 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import sin, cos, degrees, radians, pow
+from math import sin, cos, pow
 import print_result as pr
 
 
@@ -17,17 +17,29 @@ def PIDcontrol(kp, kv, ki, qd, q, dot_qd, dot_q, sum_q):
     return tau
 
 
-def sum_angle_difference(qd, q, sampling_time):
-    sum_angle = (qd-q) * sampling_time
+def sum_angle_difference(sum_angle, qd, q, sampling_time):
+    sum_angle += (qd-q) * sampling_time
 
     return sum_angle
 
 
+def sum_position_difference(sum_x, xd, x, sampling_time):
+    sum_x += (xd - x)*sampling_time
+
+    return sum_x
+
+
 def calculate_angular_acceleration(Minv1, Minv2, tau1, tau2,
-                                   h1, h2, G1, G2):
-    ddot_q = Minv1*(tau1 - h1 - G1) + Minv2*(tau2 - h2 - G2)
+                                   h1, h2, G1, G2, D, dot_q):
+    ddot_q = Minv1*(tau1 - h1 - G1 - D*dot_q) + Minv2*(tau2 - h2 - G2 - D*dot_q)
 
     return ddot_q
+
+
+def motor_angular_acceleration(Mm, tau, B, dot_theta, F=0):
+    ddot_theta = (tau - B*dot_theta - F)/Mm
+
+    return ddot_theta
 
 
 def EulerMethod(q1, q2, dot_q1, dot_q2, ddot_q1, ddot_q2, sampling_time):
