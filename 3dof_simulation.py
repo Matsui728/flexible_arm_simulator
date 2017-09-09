@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep  6 15:42:51 2017
+Created on Sat Sep  9 16:32:10 2017
 
 @author: kawalab
 """
@@ -14,9 +14,9 @@ import simlib as sl
 
 if __name__ == '__main__':
     # Parameters
-    m1, m2 = 1.0, 1.0  # 質量
-    l1, l2 = 0.3, 0.3  # リンク長さ
-    lg1, lg2 = l1/2, l2/2  # 重心位置
+    m = [1.0, 1.0, 1.0, 1.0]  # 質量
+    ll = [0.3, 0.3, 0.3, 0.3]  # リンク長さ
+    lg = [ll[0]/2, ll[1]/2, ll[2]/2, ll[3]/2]  # 重心位置
     D = 0.05  # リンク粘性
     g = 9.8  # 重力加速度
 
@@ -25,38 +25,45 @@ if __name__ == '__main__':
     B = 0.0  # モータの粘性
 
     # 慣性モーメント
-    I1 = sl.moment_inertia(m1, l1)
-    I2 = sl.moment_inertia(m2, l2)
+    Inertia = []
+    Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ゲイン調整
-    kp1, kp2 = 0.5, 0.5
-    kv1, kv2 = 0.06, 0.06
-    ki1, ki2 = 0.07, 0.07
+    control_gain1 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain2 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
+    gain = [control_gain1, control_gain2, control_gain3, control_gain4]
 
     # Link data
-    q1, q2 = 0.0, 0.0    # 初期角度
-    dot_q1, dot_q2 = 0.0, 0.0
-    ddot_q1, ddot_q2 = 0.0, 0.0
-    sum_q1, sum_q2 = 0.0, 0.0
+    q = [0.0, 0.0, 0.0, 0.0]    # 初期角度
+    dot_q = [0.0, 0.0, 0.0, 0.0]
+    ddot_q = [0.0, 0.0, 0.0, 0.0]
+    sum_q = [0.0, 0.0, 0.0, 0.0]
     # Desired Parametas
-    qd1, qd2 = radians(0), radians(0)   # 目標角度
-    dot_qd1, dot_qd2 = 0.0, 0.0
+    qd = [radians(0), radians(0), radians(0), radians(0)]    # 目標角度
+    dot_qd = [0.0, 0.0, 0.0, 0.0]
 
     # Motor data
-    theta1, theta2 = 0.0, 0.0    # 初期角度
-    dot_theta1, dot_theta2 = 0.0, 0.0
-    ddot_theta1, ddot_theta2 = 0.0, 0.0
-    sum_theta1, sum_theta2 = 0.0, 0.0
+    theta = [0.0, 0.0, 0.0, 0.0]    # 初期角度
+    dot_theta = [0.0, 0.0, 0.0, 0.0]
+    ddot_theta = [0.0, 0.0, 0.0, 0.0]
+    sum_theta = [0.0, 0.0, 0.0, 0.0]
     # Desired Parametas
-    thetad1, thetad2 = radians(30), radians(60)   # 目標角度
-    dot_thetad1, dot_thetad2 = 0.0, 0.0
+    thetad = [radians(0), radians(0), radians(0), radians(0)]    # 目標角度
+    dot_thetad = [0.0, 0.0, 0.0, 0.0]
 
     # Non linear character Parametas
-    k1 = [0.0038, 0.01]
-    k2 = [0.01, 0.02]
+    k1 = sl.non_linear_parameta(0.001, 0.001)
+    k2 = sl.non_linear_parameta(0.001, 0.001)
+    k3 = sl.non_linear_parameta(0.001, 0.001)
+    k4 = sl.non_linear_parameta(0.001, 0.001)
 
-    count_time = 20      # シミュレート時間
-    sampling_time = 0.0001  # サンプリングタイム
+    k = [k1, k2, k3, k4]
+
+    # Time Parametas
+    simulate_time = 30      # シミュレート時間
+    sampling_time = 0.001  # サンプリングタイム
 
     time_log = []
     link1 = []
@@ -76,7 +83,7 @@ if __name__ == '__main__':
     desired_angle1 = []
     desired_angle2 = []
 
-    ST = int(sl.simulation_time(count_time, sampling_time))
+    ST = int(sl.simulation_time(simulate_time, sampling_time))
 
     fl = open('2dof_simulation_link_data.csv', 'w')
     fm = open('2dof_simulation_motor_data.csv', 'w')
@@ -89,44 +96,39 @@ if __name__ == '__main__':
         time = i*sampling_time  # 時間の設定
 
         # オイラー法の定義
-        q1, q2, dot_q1, dot_q2 = sl.EulerMethod(q1, q2, dot_q1, dot_q2,
-                                                ddot_q1, ddot_q2,
-                                                sampling_time)
+        q, dot_q, ddot_q = sl.EulerMethod(q, dot_q, ddot_q, sampling_time)
 
-        (theta1, theta2,
-         dot_theta1, dot_theta2) = sl.EulerMethod(theta1, theta2,
-                                                  dot_theta1, dot_theta2,
-                                                  ddot_theta1, ddot_theta2,
-                                                  sampling_time)
+        theta, dot_theta, ddot_theta = sl.EulerMethod(theta, dot_theta,
+                                                      ddot_theta,
+                                                      sampling_time)
 
         # 慣性行列の定義
-        M1, M2, M3, M4 = sl.inertia_term_2dof(m1, m2, l1, l2, lg1, lg2,
-                                              I1, I2, q2)
-        # 逆行列の掃き出し
-        Minv1, Minv2, Minv3, Minv4 = sl.invm_2dof(M1, M2, M3, M4)
+        mm = sl.moment_matrix_3dof(m, ll, lg, Inertia, q)
 
         # コリオリ項の定義
-        h1, h2 = sl.coriolis_item_2dof(m2, l1, lg2, q2, dot_q1, dot_q2)
+        H = sl.coriolis_item_3dof(m, ll, lg, Inertia, q, dot_q)
 
         # 重力項の定義
-        # G1, G2 = sl.gravity_item_2dof(m1, m2, l1, lg1, lg2, q1, q2, g)
-        G1, G2 = 0.0, 0.0
-        # 入力
-        tau1 = sl.PIDcontrol(kp1, kv1, ki1, thetad1, theta1,
-                             dot_thetad1, dot_theta1, sum_theta1)
-        tau2 = sl.PIDcontrol(kp2, kv2, ki2, thetad2, theta2,
-                             dot_thetad2, dot_theta2, sum_theta2)
+        g1, g2, g3, g4 = 0.0, 0.0, 0.0, 0.0
+        G = [g1, g2, g3, g4]
+
+        # 二回微分値の導出
+        E = sl.twice_differential_values(ll, q)
+
+        # 逆行列の掃き出し
+        Phi = sl.phi_matrix(mm, E)
+        invPhi = sl.Inverse_matrix(Phi)
+
+        # モータ入力
+        Tau = sl.PID_angle_control(gain, qd, q, dot_qd, dot_q, sum_q)
 
         # 偏差と非線形弾性特性値の計算
-        e1 = sl.difference_part(theta1, q1)
-        e2 = sl.difference_part(theta2, q2)
-        e = [e1, e2]
+        e = sl.difference_part(theta, q)
 
-        K1 = sl.non_linear_item(k1[0], k2[0], e[0])
-        K2 = sl.non_linear_item(k1[1], k2[1], e[1])
-        K1 = K1*e[0]
-        K2 = K2*e[1]
-        K = [K1, K2]
+        K = sl.non_linear_item(k[:][0], k[:][1], e)
+
+
+
 
         # 各加速度の計算
         ddot_q1 = sl.calculate_angular_acceleration(Minv1, Minv2, K[0], K[1],
