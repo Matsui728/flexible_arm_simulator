@@ -42,7 +42,9 @@ def link_inertia(m, l, Inertia):
 
 
 def sum_angle_difference(sum_angle, qd, q, sampling_time):
-    sum_angle += (qd-q) * sampling_time
+    for i in range(len(sum_angle)):
+        for i in range(len(q)):
+            sum_angle[i-1] += (qd[i-1]-q[i-1]) * sampling_time
 
     return sum_angle
 
@@ -60,8 +62,20 @@ def calculate_angular_acceleration(Minv1, Minv2, tau1, tau2,
     return ddot_q
 
 
+def angular_acceleration_3dof(inv_phi, f, A):
+    ddot_q1 = inv_phi[0][0] * f[0] + inv_phi[0][1] * f[1] + inv_phi[0][2] * f[2] + inv_phi[0][3] * f[3] + inv_phi[0][4] * A[0] + inv_phi[0][5] * A[1]
+    ddot_q2 = inv_phi[1][0] * f[0] + inv_phi[1][1] * f[1] + inv_phi[1][2] * f[2] + inv_phi[1][3] * f[3] + inv_phi[1][4] * A[0] + inv_phi[1][5] * A[1]
+    ddot_q3 = inv_phi[2][0] * f[0] + inv_phi[2][1] * f[1] + inv_phi[2][2] * f[2] + inv_phi[2][3] * f[3] + inv_phi[2][4] * A[0] + inv_phi[2][5] * A[1]
+    ddot_q4 = inv_phi[3][0] * f[0] + inv_phi[3][1] * f[1] + inv_phi[3][2] * f[2] + inv_phi[3][3] * f[3] + inv_phi[3][4] * A[0] + inv_phi[3][5] * A[1]
+
+    ddot_q = [ddot_q1, ddot_q2, ddot_q3, ddot_q4]
+
+    return ddot_q
+
+
 def motor_angular_acceleration(Mm, tau, B, dot_theta, F=0):
-    ddot_theta = (tau - B*dot_theta - F)/Mm
+    for i in range(len(tau)):
+        ddot_theta = (tau[i-1] - B*dot_theta[i-1] - F[i-1])/Mm
 
     return ddot_theta
 
@@ -186,20 +200,61 @@ def difference_part(theta, q):
     return e_data
 
 
-def non_linear_item(k1, k2, e):
-    K = []
+def non_linear_item(k1, k2, e, K):
     for i in range(len(e)):
-        k = k1 + k2*pow(e[i-1], 2)
-        k = k*e[i-1]
+        k = k1 + k2*pow(e[i], 2)
+        k = k*e[i]
         K.append(k)
+
     return K
 
 
-def Inverse_matrix(Matrix):
+def restraint_part(l, q, dot_q):
+    dot_P = -l[0] * sin(q[0]) * dot_q[0] - l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) + l[2] * sin(q[2]) * dot_q[2] + l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3])
+    P = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1]) - l[2] * cos(q[2]) - l[3] * cos(q[2] + q[3])
+
+    dot_Q = l[0] * cos(q[0]) * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3])
+    Q = l[0] * sin(q[0]) + l[1] * sin(q[0] + q[1]) - l[2] * sin(q[2]) - l[3] * sin(q[2] + q[3])
+
+    return dot_P, P, dot_Q, Q
+
+
+def input_forces(l, q, dot_q, h, D, K, Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1):
+    f1 = K[0] + Jt[0] * Fx + Jt[1] * Fy - h[0] - D * dot_q[0]
+    f2 = K[1] + Jt[2] * Fx + Jt[3] * Fy - h[1] - D * dot_q[1]
+    f3 = K[2] + Jt[4] * Fx + Jt[5] * Fy - h[2] - D * dot_q[2]
+    f4 = K[3] + Jt[6] * Fx + Jt[7] * Fy - h[3] - D * dot_q[3]
+
+    A1 = -2 * s[0] * dot_P - s[0] * s[0] * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
+    A2 = -2 * s[1] * dot_Q - s[1] * s[1] * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * sin(q[2]) * dot_q[2] * dot_q[2] - l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
+
+    f = [f1, f2, f3, f4]
+    A = [A1, A2]
+
+    return f, A
+
+
+def binding_force(inv_phi, f, A):
+    lambda_x = inv_phi[4][0] * f[0] + inv_phi[4][1] * f[1] + inv_phi[4][2] * f[2] + inv_phi[4][3] * f[3] + inv_phi[4][4] * A[0] + inv_phi[4][5] * A[1]
+    lambda_y = inv_phi[5][0] * f[0] + inv_phi[5][1] * f[1] + inv_phi[5][2] * f[2] + inv_phi[5][3] * f[3] + inv_phi[5][4] * A[0] + inv_phi[5][5] * A[1]
+
+    lam = [lambda_x, lambda_y]
+
+    return lam
+
+
+def inverse_matrix(Matrix):
     Matrix = np.array(Matrix)
     Inverse_Matorix = np.linalg.inv(Matrix)
 
     return Inverse_Matorix
+
+
+def transpose_matrix(matrix):
+    Matrix = np.array(matrix)
+    transpose_matrix = np.transpose(Matrix)
+
+    return transpose_matrix
 
 
 def non_linear_parameta(k1, k2):
@@ -208,25 +263,35 @@ def non_linear_parameta(k1, k2):
     return K
 
 
+def jacobi_matrix(l, q):
+    J1 = -l[0] * sin(q[0]) - l[1] * sin(q[0] + q[1])
+    J2 = -l[1] * sin(q[0] + q[1])
+    J3 = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1])
+    J4 = l[1] * cos(q[0] + q[1])
+
+    J5 = -l[2] * sin(q[2]) - l[3] * sin(q[2] + q[3])
+    J6 = -l[3] * sin(q[2] + q[3])
+    J7 = l[2] * cos(q[2]) + l[3] * cos(q[2] + q[3])
+    J8 = l[3] * cos(q[2] + q[3])
+
+    J = [[J1, J2, J3, J4], [J5, J6, J7, J8]]
+
+    return J
+
+
 def print_non_lineaar_Characteristics():
     k1 = [0.001, 10]
     k2 = [0.001, 0.005, 0.01]
-    x_data = range(-100, 100, 1)
+    x_data = range(-50, 50)
     y1_data = []
     y2_data = []
     y3_data = []
     y4_data = []
-    for i in range(len(x_data)):
-        x = x_data[i-1]
-        y1 = non_linear_item(k1[0], k2[0], x)
-        y2 = non_linear_item(k1[0], k2[1], x)
-        y3 = non_linear_item(k1[0], k2[2], x)
-        y4 = non_linear_item(k1[1], k2[0], x)
 
-        y1_data.append(y1)
-        y2_data.append(y2)
-        y3_data.append(y3)
-        y4_data.append(y4)
+    y1_data = non_linear_item(k1[0], k2[0], x_data, y1_data)
+    y2_data = non_linear_item(k1[0], k2[1], x_data, y2_data)
+    y3_data = non_linear_item(k1[0], k2[2], x_data, y3_data)
+    y4_data = non_linear_item(k1[1], k2[0], x_data, y4_data)
 
     yd = [y1_data, y2_data, y3_data, y4_data]
     label_name = ["k1 = {}, k2 = {}". format(k1[0], k2[0]),
@@ -255,5 +320,5 @@ if __name__ == '__main__':
     print_non_lineaar_Characteristics()
 
     example_matrix = [[1, 2, 3], [1, 1, 1], [1, 3, 2]]
-    invm = Inverse_matrix(example_matrix)
+    invm = inverse_matrix(example_matrix)
     print(invm)

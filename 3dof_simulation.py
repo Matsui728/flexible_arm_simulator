@@ -117,7 +117,12 @@ if __name__ == '__main__':
 
         # 逆行列の掃き出し
         Phi = sl.phi_matrix(mm, E)
-        invPhi = sl.Inverse_matrix(Phi)
+        invPhi = sl.inverse_matrix(Phi)
+
+        # ヤコビとヤコビ転置
+        J = sl.jacobi_matrix(ll, q)
+
+        Jt = sl.transpose_matrix(J)
 
         # モータ入力
         Tau = sl.PID_angle_control(gain, qd, q, dot_qd, dot_q, sum_q)
@@ -127,20 +132,24 @@ if __name__ == '__main__':
 
         K = sl.non_linear_item(k[:][0], k[:][1], e)
 
+        # 拘束力とダイナミクス右辺の計算
+        dot_P, P, dot_Q, Q = sl.restraint_part(ll, q, dot_q)
+
+        f, A = sl.input_forces(ll, q, dot_q, H, D, K,
+                               Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1)
+
+        # 関節角加速度の計算
+        ddot_q = sl.angular_acceleration_3dof(invPhi, f, A)
+
+        # 拘束項
+        lam = sl.binding_force(invPhi, f, A)
+
+        # モータ角加速度の計算
+        ddot_theta = sl.motor_angular_acceleration(Mm, Tau[i-1], B,
+                                                   dot_theta[i-1], K)
 
 
 
-        # 各加速度の計算
-        ddot_q1 = sl.calculate_angular_acceleration(Minv1, Minv2, K[0], K[1],
-                                                    h1, h2, G1, G2, D, dot_q1)
-
-        ddot_q2 = sl.calculate_angular_acceleration(Minv3, Minv4, K[0], K[1],
-                                                    h1, h2, G1, G2, D, dot_q2)
-
-        ddot_theta1 = sl.motor_angular_acceleration(Mm, tau1, B,
-                                                    dot_theta1, K[0])
-        ddot_theta2 = sl.motor_angular_acceleration(Mm, tau2, B,
-                                                    dot_theta2, K[1])
 
         # 偏差積分値の計算
         sum_q1 = sl.sum_angle_difference(sum_q1, qd1, q1, sampling_time)
