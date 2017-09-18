@@ -7,6 +7,7 @@ Created on Wed Sep  6 10:56:16 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
+from math import degrees
 
 
 def print_graph(title_name, x_data, y_data,
@@ -21,6 +22,35 @@ def print_graph(title_name, x_data, y_data,
     plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
     plt.grid()
     plt.tight_layout()
+
+
+def save_angle_excel_log(time, q, qd, dot_q, ddot_q):
+    log_data = "{}, {}, {}, {}, {}, {}, {}, {}, {},"
+    + "{}, {}, {}, {},"
+    + "{}, {}, {}, {}\n". format(time, degrees(q[0]), degrees(q[1]),
+                                 degrees(q[2]), degrees(q[3]),
+                                 degrees(qd[0]), degrees(qd[1]),
+                                 degrees(qd[2]), degrees(qd[3]),
+                                 dot_q[0], dot_q[1], dot_q[2], dot_q[3],
+                                 ddot_q[0], ddot_q[1], ddot_q[2], ddot_q[3])
+
+    return log_data
+
+
+def save_part_log(x_data, x_data_log):
+    x_data_log.append(x_data)
+
+    return x_data_log
+
+
+def make_data_log_list(data_list):
+    out_put_data_set = []
+    for i in range(len(data_list)):
+        data_log = save_part_log(data_list[i-1], data_list[i-1])
+        out_put_data_set.append(data_log)
+
+    return out_put_data_set
+
 
 
 if __name__ == '__main__':

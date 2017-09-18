@@ -7,7 +7,7 @@ Created on Sat Sep  9 16:32:10 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import degrees, radians
+from math import degrees, radians, sin, cos
 import print_result as pr
 import simlib as sl
 
@@ -65,23 +65,14 @@ if __name__ == '__main__':
     simulate_time = 30      # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
+    # Deseired Position
+    xd = 0.2
+    yd = 0.4
+    Xd = [xd, yd]
+    sum_x = []
+    sum_y = []
+
     time_log = []
-    link1 = []
-    link2 = []
-    dot_deg1 = []
-    dot_deg2 = []
-    ddot_deg1 = []
-    ddot_deg2 = []
-
-    motor1 = []
-    motor2 = []
-    dot_mdeg1 = []
-    dot_mdeg2 = []
-    ddot_mdeg1 = []
-    ddot_mdeg2 = []
-
-    desired_angle1 = []
-    desired_angle2 = []
 
     ST = int(sl.simulation_time(simulate_time, sampling_time))
 
@@ -124,8 +115,21 @@ if __name__ == '__main__':
 
         Jt = sl.transpose_matrix(J)
 
+        # 手先位置導出
+        X = ll[0] * cos(q[0]) + ll[1] * cos(q[0] + q[1])
+        Y = ll[0] * sin(q[0]) + ll[1] * sin(q[0] + q[1])
+
+        potision = [X, Y]
+
+        # 偏差積分値の計算
+        sum_x = sl.sum_position_difference(sum_x, Xd[0], X, sampling_time)
+        sum_y = sl.sum_position_difference(sum_y, Xd[1], Y, sampling_time)
+
+        sum_X = [sum_x, sum_y]
+
         # モータ入力
-        Tau = sl.PID_angle_control(gain, qd, q, dot_qd, dot_q, sum_q)
+        Tau = sl.PID_potiton_control_3dof(gain, Xd, potision,
+                                          Jt, dot_theta, sum_X)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
@@ -148,56 +152,30 @@ if __name__ == '__main__':
         ddot_theta = sl.motor_angular_acceleration(Mm, Tau[i-1], B,
                                                    dot_theta[i-1], K)
 
+        # エクセル用log_data保存
+        link_data = pr.save_angle_excel_log(q, qd, dot_q, ddot_q)
+        motor_data = pr.save_angle_excel_log(theta, thetad,
+                                             dot_theta, ddot_theta)
 
-
-
-        # 偏差積分値の計算
-        sum_q1 = sl.sum_angle_difference(sum_q1, qd1, q1, sampling_time)
-        sum_q2 = sl.sum_angle_difference(sum_q2, qd2, q2, sampling_time)
-
-        sum_theta1 = sl.sum_angle_difference(sum_theta1, thetad1,
-                                             theta1, sampling_time)
-        sum_theta2 = sl.sum_angle_difference(sum_theta2, thetad2,
-                                             theta2, sampling_time)
-
-        l_data = "{}, {}, {}, {}, {}, {}, {}, {}, {}\n". format(time,
-                                                                degrees(q1),
-                                                                degrees(q2),
-                                                                degrees(qd1),
-                                                                degrees(qd2),
-                                                                dot_q1, dot_q2,
-                                                                ddot_q1, ddot_q2)
-
-        m_data = "{}, {}, {}, {}, {}, {}, {}, {}, {}\n". format(time,
-                                                                degrees(theta1),
-                                                                degrees(theta2),
-                                                                degrees(thetad1),
-                                                                degrees(thetad2),
-                                                                dot_theta1, dot_theta2,
-                                                                ddot_theta1, ddot_theta2)
-
+        # Save time log
         time_log = sl.save_log(time, time_log)
-        desired_angle1 = sl.save_log(degrees(thetad1), desired_angle1)
-        desired_angle2 = sl.save_log(degrees(thetad2), desired_angle2)
 
-        # Save Link data
-        link1 = sl.save_log(degrees(q1), link1)
-        link2 = sl.save_log(degrees(q2), link2)
-        dot_deg1 = sl.save_log(dot_q1, dot_deg1)
-        dot_deg2 = sl.save_log(dot_q2, dot_deg2)
-        ddot_deg1 = sl.save_log(ddot_q1, ddot_deg1)
-        ddot_deg2 = sl.save_log(ddot_q2, ddot_deg2)
+        # Save link_data(radian)
+        qd_data = pr.make_data_log_list(qd)
+        q_data = pr.make_data_log_list(q)
+        dot_q_data = pr.make_data_log_list(dot_q)
+        ddot_q_data = pr.make_data_log_list(ddot_q)
 
-        # Save Motor data
-        motor1 = sl.save_log(degrees(theta1), motor1)
-        motor2 = sl.save_log(degrees(theta2), motor2)
-        dot_mdeg1 = sl.save_log(dot_theta1, dot_mdeg1)
-        dot_mdeg2 = sl.save_log(dot_theta2, dot_mdeg2)
-        ddot_mdeg1 = sl.save_log(ddot_theta1, ddot_mdeg1)
-        ddot_mdeg2 = sl.save_log(ddot_theta2, ddot_mdeg2)
+        # Save Motor data(radian)
+        thetad_data = pr.make_data_log_list(thetad)
+        theta_data = pr.make_data_log_list(theta)
+        dot_theta_data = pr.make_data_log_list(dot_theta)
+        ddot_theta_data = pr.make_data_log_list(ddot_theta)
 
-        fl.write(l_data)
-        fm.write(m_data)
+        # Position data
+
+        fl.write(link_data)
+        fm.write(motor_data)
 
     # Print result
     x_data = [time_log]

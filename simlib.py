@@ -27,6 +27,27 @@ def PID_angle_control(gain, qd, q, dot_qd, dot_q, sum_q):
     return Tau
 
 
+def PID_potiton_control_3dof(gain, Xd, X, Jt, dot_theta, sum_X):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i-1]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    tau1 = kp[0] * (Jt[0] * (Xd[0] - X[0]) + Jt[1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0] * sum_X[0] + Jt[1] * sum_X[1])
+    tau2 = kp[1] * (Jt[2] * (Xd[0] - X[0]) + Jt[3] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[2] * sum_X[0] + Jt[3] * sum_X[1])
+    tau3 = kp[2] * (Jt[4] * (Xd[0] - X[0]) + Jt[5] * (Xd[1] - X[1])) - kv[2] * dot_theta[2] + ki[2] * (Jt[4] * sum_X[0] + Jt[5] * sum_X[1])
+    tau4 = kp[3] * (Jt[6] * (Xd[0] - X[0]) + Jt[7] * (Xd[1] - X[1])) - kv[3] * dot_theta[3] + ki[3] * (Jt[6] * sum_X[0] + Jt[7] * sum_X[1])
+
+    Tau = [tau1, tau2, tau3, tau4]
+
+    return Tau
+
+
 def moment_inertia(m, l):
     moment = m*l*l/12
 
@@ -50,9 +71,9 @@ def sum_angle_difference(sum_angle, qd, q, sampling_time):
 
 
 def sum_position_difference(sum_x, xd, x, sampling_time):
-    sum_x += (xd - x)*sampling_time
+        sum_x += (xd - x)*sampling_time
 
-    return sum_x
+        return sum_x
 
 
 def calculate_angular_acceleration(Minv1, Minv2, tau1, tau2,
@@ -308,12 +329,6 @@ def simulation_time(count_time, sampling_time):
     simulation_time = count_time/sampling_time
 
     return simulation_time
-
-
-def save_log(x_data, x_data_log):
-    x_data_log.append(x_data)
-
-    return x_data_log
 
 
 if __name__ == '__main__':
