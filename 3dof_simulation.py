@@ -130,7 +130,7 @@ if __name__ == '__main__':
         X = ll[0] * cos(q[0]) + ll[1] * cos(q[0] + q[1])
         Y = ll[0] * sin(q[0]) + ll[1] * sin(q[0] + q[1])
 
-        potision = [X, Y]
+        position = [X, Y]
 
         # 偏差積分値の計算
         # sum_x = sl.sum_position_difference(sum_x, xd, X, sampling_time)
@@ -141,13 +141,13 @@ if __name__ == '__main__':
         sum_X = [sum_x, sum_y]
 
         # モータ入力
-        Tau = sl.PID_potiton_control_3dof(gain, Xd, potision,
+        Tau = sl.PID_potiton_control_3dof(gain, Xd, position,
                                           Jt, dot_theta, sum_X)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
 
-        K = sl.non_linear_item(k[:][0], k[:][1], e)
+        K = sl.non_linear_item(k, e)
 
         # 拘束力とダイナミクス右辺の計算
         dot_P, P, dot_Q, Q = sl.restraint_part(ll, q, dot_q)
@@ -162,15 +162,15 @@ if __name__ == '__main__':
         lam = sl.binding_force(invPhi, f, A)
 
         # モータ角加速度の計算
-        ddot_theta = sl.motor_angular_acceleration(Mm, Tau[i-1], B,
-                                                   dot_theta[i-1], K)
+        ddot_theta = sl.motor_angular_acceleration(Mm, Tau, B,
+                                                   dot_theta, K)
 
         # エクセル用log_data保存
-        link_data = pr.save_angle_excel_log(q, qd, dot_q, ddot_q)
-        motor_data = pr.save_angle_excel_log(theta, thetad,
+        link_data = pr.save_angle_excel_log(time, q, qd, dot_q, ddot_q)
+        motor_data = pr.save_angle_excel_log(time, theta, thetad,
                                              dot_theta, ddot_theta)
 
-        position_data = pr.save_position_log(time, potision[0], potision[1],
+        position_data = pr.save_position_log(time, position[0], position[1],
                                              xd, yd, lam[0], lam[1])
 
         # Save time log
@@ -189,8 +189,8 @@ if __name__ == '__main__':
         ddot_theta_data = pr.make_data_log_list(ddot_theta)
 
         # Position data
-        x_data = pr.save_part_log(potision[0], x_data)
-        y_data = pr.save_part_log(potision[1], y_data)
+        x_data = pr.save_part_log(position[0], x_data)
+        y_data = pr.save_part_log(position[1], y_data)
 
         fl.write(link_data)
         fm.write(motor_data)

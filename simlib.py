@@ -20,8 +20,8 @@ def imput_gain(kp, kv, ki):
 def PID_angle_control(gain, qd, q, dot_qd, dot_q, sum_q):
     Tau = []
     for i in range(len(gain)):
-        kp, kv, ki = gain[i-1]
-        tau = kp*(qd-q[i-1]) + kv*(dot_qd - dot_q[i-1]) + ki*sum_q[i-1]
+        kp, kv, ki = gain[i]
+        tau = kp*(qd-q[i]) + kv*(dot_qd - dot_q[i]) + ki*sum_q[i]
         Tau.append(tau)
 
     return Tau
@@ -33,15 +33,15 @@ def PID_potiton_control_3dof(gain, Xd, X, Jt, dot_theta, sum_X):
     ki = []
 
     for i in range(len(gain)):
-        Kp, Kv, Ki = gain[i-1]
+        Kp, Kv, Ki = gain[i]
         kp.append(Kp)
         kv.append(Kv)
         ki.append(Ki)
 
-    tau1 = kp[0] * (Jt[0] * (Xd[0] - X[0]) + Jt[1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0] * sum_X[0] + Jt[1] * sum_X[1])
-    tau2 = kp[1] * (Jt[2] * (Xd[0] - X[0]) + Jt[3] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[2] * sum_X[0] + Jt[3] * sum_X[1])
-    tau3 = kp[2] * (Jt[4] * (Xd[0] - X[0]) + Jt[5] * (Xd[1] - X[1])) - kv[2] * dot_theta[2] + ki[2] * (Jt[4] * sum_X[0] + Jt[5] * sum_X[1])
-    tau4 = kp[3] * (Jt[6] * (Xd[0] - X[0]) + Jt[7] * (Xd[1] - X[1])) - kv[3] * dot_theta[3] + ki[3] * (Jt[6] * sum_X[0] + Jt[7] * sum_X[1])
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1])
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1])
+    tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) - kv[2] * dot_theta[2] + ki[2] * (Jt[2][0] * sum_X[0] + Jt[2][1] * sum_X[1])
+    tau4 = kp[3] * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1])) - kv[3] * dot_theta[3] + ki[3] * (Jt[3][0] * sum_X[0] + Jt[3][1] * sum_X[1])
 
     Tau = [tau1, tau2, tau3, tau4]
 
@@ -56,7 +56,7 @@ def moment_inertia(m, l):
 
 def link_inertia(m, l, Inertia):
     for i in range(len(m)):
-        inertia = moment_inertia(m[i-1], l[i-1])
+        inertia = moment_inertia(m[i], l[i])
         Inertia.append(inertia)
 
     return Inertia
@@ -65,7 +65,7 @@ def link_inertia(m, l, Inertia):
 def sum_angle_difference(sum_angle, qd, q, sampling_time):
     for i in range(len(sum_angle)):
         for i in range(len(q)):
-            sum_angle[i-1] += (qd[i-1]-q[i-1]) * sampling_time
+            sum_angle[i] += (qd[i]-q[i]) * sampling_time
 
     return sum_angle
 
@@ -94,17 +94,17 @@ def angular_acceleration_3dof(inv_phi, f, A):
     return ddot_q
 
 
-def motor_angular_acceleration(Mm, tau, B, dot_theta, F=0):
+def motor_angular_acceleration(Mm, tau, B, dot_theta, F):
     for i in range(len(tau)):
-        ddot_theta = (tau[i-1] - B*dot_theta[i-1] - F[i-1])/Mm
+        ddot_theta = (tau[i] - B*dot_theta[i] - F[i])/Mm
 
     return ddot_theta
 
 
 def EulerMethod(q, dot_q, ddot_q, sampling_time):
     for i in range(len(q)):
-        dot_q[i-1] += ddot_q[i-1] * sampling_time
-        q[i-1] += dot_q[i-1] * sampling_time
+        dot_q[i] += ddot_q[i] * sampling_time
+        q[i] += dot_q[i] * sampling_time
 
     return q, dot_q, ddot_q
 
@@ -173,7 +173,7 @@ def coriolis_item_3dof(m, l, lg, I, q, dot_q):
 def link_imput_force(tau, h, B, dot_q):
     imput_force = []
     for i in range(len(tau)):
-        f = tau[i-1] - h[i-1] - B * dot_q[i-1]
+        f = tau[i] - h[i] - B * dot_q[i]
         imput_force.append(f)
 
     return imput_force
@@ -215,17 +215,18 @@ def gravity_item_2dof(m1, m2, l1, lg1, lg2, q1, q2, g):
 def difference_part(theta, q):
     e_data = []
     for i in range(len(theta)):
-        e = (theta[i-1] - q[i-1])
+        e = (theta[i] - q[i])
         e_data.append(e)
 
     return e_data
 
 
-def non_linear_item(k1, k2, e, K):
+def non_linear_item(k, e):
+    K = []
     for i in range(len(e)):
-        k = k1 + k2*pow(e[i], 2)
-        k = k*e[i]
-        K.append(k)
+        kpart1 = k[i][0] + k[i][1]*pow(e[i], 2)
+        kpart2 = kpart1*e[i]
+        K.append(kpart2)
 
     return K
 
@@ -241,13 +242,13 @@ def restraint_part(l, q, dot_q):
 
 
 def input_forces(l, q, dot_q, h, D, K, Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1):
-    f1 = K[0] + Jt[0] * Fx + Jt[1] * Fy - h[0] - D * dot_q[0]
-    f2 = K[1] + Jt[2] * Fx + Jt[3] * Fy - h[1] - D * dot_q[1]
-    f3 = K[2] + Jt[4] * Fx + Jt[5] * Fy - h[2] - D * dot_q[2]
-    f4 = K[3] + Jt[6] * Fx + Jt[7] * Fy - h[3] - D * dot_q[3]
+    f1 = K[0] + Jt[0][0] * Fx + Jt[0][1] * Fy - h[0] - D * dot_q[0]
+    f2 = K[1] + Jt[1][0] * Fx + Jt[1][1] * Fy - h[1] - D * dot_q[1]
+    f3 = K[2] + Jt[2][0] * Fx + Jt[2][1] * Fy - h[2] - D * dot_q[2]
+    f4 = K[3] + Jt[3][0] * Fx + Jt[3][1] * Fy - h[3] - D * dot_q[3]
 
-    A1 = -2 * s[0] * dot_P - s[0] * s[0] * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
-    A2 = -2 * s[1] * dot_Q - s[1] * s[1] * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * sin(q[2]) * dot_q[2] * dot_q[2] - l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
+    A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
+    A2 = -2 * s * dot_Q - s * s * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * sin(q[2]) * dot_q[2] * dot_q[2] - l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
 
     f = [f1, f2, f3, f4]
     A = [A1, A2]
