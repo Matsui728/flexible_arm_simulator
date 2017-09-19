@@ -17,7 +17,7 @@ if __name__ == '__main__':
     m = [1.0, 1.0, 1.0, 1.0]  # 質量
     ll = [0.3, 0.3, 0.3, 0.3]  # リンク長さ
     lg = [ll[0]/2, ll[1]/2, ll[2]/2, ll[3]/2]  # 重心位置
-    D = 0.05  # リンク粘性
+    D = 0.1  # リンク粘性
     g = 9.8  # 重力加速度
 
     # Prametas of motor
@@ -29,14 +29,14 @@ if __name__ == '__main__':
     Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain2 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain1 = sl.imput_gain(1.0, 0.004, 0.0)
+    control_gain2 = sl.imput_gain(1.0, 0.004, 0.0)
     control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain4 = sl.imput_gain(1.0, 0.004, 0.0)
     gain = [control_gain1, control_gain2, control_gain3, control_gain4]
 
     # Link data
-    q = [0.0, 0.0, 0.0, 0.0]    # 初期角度
+    q = [radians(45), radians(90), radians(45), radians(90)]    # 初期角度
     dot_q = [0.0, 0.0, 0.0, 0.0]
     ddot_q = [0.0, 0.0, 0.0, 0.0]
     sum_q = [0.0, 0.0, 0.0, 0.0]
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     dot_qd = [0.0, 0.0, 0.0, 0.0]
 
     # Motor data
-    theta = [0.0, 0.0, 0.0, 0.0]    # 初期角度
+    theta = [radians(45), radians(90), radians(45), radians(90)]    # 初期角度
     dot_theta = [0.0, 0.0, 0.0, 0.0]
     ddot_theta = [0.0, 0.0, 0.0, 0.0]
     sum_theta = [0.0, 0.0, 0.0, 0.0]
@@ -54,21 +54,23 @@ if __name__ == '__main__':
     dot_thetad = [0.0, 0.0, 0.0, 0.0]
 
     # Non linear character Parametas
-    k1 = sl.non_linear_parameta(0.001, 0.001)
-    k2 = sl.non_linear_parameta(0.001, 0.001)
-    k3 = sl.non_linear_parameta(0.001, 0.001)
-    k4 = sl.non_linear_parameta(0.001, 0.001)
+    k1 = sl.non_linear_parameta(0.003, 0.003)
+    k2 = sl.non_linear_parameta(0.003, 0.003)
+    k3 = sl.non_linear_parameta(0.000, 0.000)
+    k4 = sl.non_linear_parameta(0.003, 0.003)
 
     k = [k1, k2, k3, k4]
 
     # Time Parametas
-    simulate_time = 30      # シミュレート時間
+    simulate_time = 10      # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
-    xd = 0.2
-    yd = 0.4
+    xd = 0.5
+    yd = 0.2
     Xd = [xd, yd]
+    x_data = []
+    y_data = []
     sum_x = []
     sum_y = []
 
@@ -76,11 +78,20 @@ if __name__ == '__main__':
 
     ST = int(sl.simulation_time(simulate_time, sampling_time))
 
-    fl = open('2dof_simulation_link_data.csv', 'w')
-    fm = open('2dof_simulation_motor_data.csv', 'w')
+    fl = open('3dof_simulation_link_data.csv', 'w')
+    fm = open('3dof_simulation_motor_data.csv', 'w')
+    fp = open('3dof_simulation_position_data.csv', 'w')
 
-    fl.write('Time[s], q1, q2, qd1, qd2, dot_q1, dot_q2, ddot_q1, ddot_q2\n')
-    fm.write('Time[s], theta1, theta2, thetad1, thetad2, dot_theta1, dot_theta2, ddot_theta1, ddot_theta2\n')
+    fl.write('Time[s], q1, q2, q3, q4, qd1, qd2, qd3, qd4,'
+             + 'dot_q1, dot_q2, dot_q3, dot_q4,'
+             + 'ddot_q1, ddot_q2, ddot_q3, ddot_q4\n')
+
+    fm.write('Time[s], theta1, theta2, theta3, theta4,'
+             + 'thetad1, thetad2, thetad3, thetad4,'
+             + 'dot_theta1, dot_theta2, dot_theta3, dot_theta4,'
+             + 'ddot_theta1, ddot_theta2, ddot_theta3, ddot_theta4\n')
+
+    fp.write('Time[s], X, Y, Xd, Yd, lambdax, lambday\n')
 
     for i in range(ST):
 
@@ -122,8 +133,10 @@ if __name__ == '__main__':
         potision = [X, Y]
 
         # 偏差積分値の計算
-        sum_x = sl.sum_position_difference(sum_x, Xd[0], X, sampling_time)
-        sum_y = sl.sum_position_difference(sum_y, Xd[1], Y, sampling_time)
+        # sum_x = sl.sum_position_difference(sum_x, xd, X, sampling_time)
+        # sum_y = sl.sum_position_difference(sum_y, yd, Y, sampling_time)
+        sum_x = 0.0
+        sum_y = 0.0
 
         sum_X = [sum_x, sum_y]
 
@@ -140,7 +153,7 @@ if __name__ == '__main__':
         dot_P, P, dot_Q, Q = sl.restraint_part(ll, q, dot_q)
 
         f, A = sl.input_forces(ll, q, dot_q, H, D, K,
-                               Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1)
+                               Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=30)
 
         # 関節角加速度の計算
         ddot_q = sl.angular_acceleration_3dof(invPhi, f, A)
@@ -157,8 +170,11 @@ if __name__ == '__main__':
         motor_data = pr.save_angle_excel_log(theta, thetad,
                                              dot_theta, ddot_theta)
 
+        position_data = pr.save_position_log(time, potision[0], potision[1],
+                                             xd, yd, lam[0], lam[1])
+
         # Save time log
-        time_log = sl.save_log(time, time_log)
+        time_log = pr.save_part_log(time, time_log)
 
         # Save link_data(radian)
         qd_data = pr.make_data_log_list(qd)
@@ -173,28 +189,15 @@ if __name__ == '__main__':
         ddot_theta_data = pr.make_data_log_list(ddot_theta)
 
         # Position data
+        x_data = pr.save_part_log(potision[0], x_data)
+        y_data = pr.save_part_log(potision[1], y_data)
 
         fl.write(link_data)
         fm.write(motor_data)
+        fp.write(position_data)
 
     # Print result
-    x_data = [time_log]
-    link_data = [link1, link2, desired_angle1, desired_angle2]
-    label_name1 = ['Link1', 'Link2', 'Desired angle1', 'Desired angle2']
 
-    motor_data = [motor1, motor2, desired_angle1, desired_angle2]
-    label_name2 = ['Motor1', 'Motor2', 'Desired angle1', 'Desired angle2']
-
-    plt.figure(figsize=(5, 5))
-    plt. subplot(2, 1, 1)
-    pr.print_graph("Link Angle", time_log, link_data,
-                   label_name1, "Time[s]", "Angle[deg]", num_plot_data=4)
-
-    plt.subplot(2, 1, 2)
-    pr.print_graph("Motor Angle", time_log, motor_data,
-                   label_name2, "Time[s]", "Angle[deg]", num_plot_data=4)
-
-    plt.show()
 
     fl.close()
     fm.close()

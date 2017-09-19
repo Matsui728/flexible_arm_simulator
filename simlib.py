@@ -103,19 +103,19 @@ def motor_angular_acceleration(Mm, tau, B, dot_theta, F=0):
 
 def EulerMethod(q, dot_q, ddot_q, sampling_time):
     for i in range(len(q)):
-        dot_q[i-q] += ddot_q[i-1] * sampling_time
+        dot_q[i-1] += ddot_q[i-1] * sampling_time
         q[i-1] += dot_q[i-1] * sampling_time
 
     return q, dot_q, ddot_q
 
 
 def moment_matrix_3dof(m, l, lg, I, q):
-    M1 = m[0] * lg[0] * lg[0] + I[0] + m[1] * (l[0] * l[0] + lg[1] * lg[1] + 2.0 * l[0] * lc[1] * cos(q[1])) + I[1]
+    M1 = m[0] * lg[0] * lg[0] + I[0] + m[1] * (l[0] * l[0] + lg[1] * lg[1] + 2.0 * l[0] * lg[1] * cos(q[1])) + I[1]
     M2 = m[1] * (lg[1] * lg[1] + l[0] * lg[1] * cos(q[1])) + I[1]
     M3 = m[1] * (lg[1] * lg[1] + l[0] * lg[1] * cos(q[1])) + I[1]
     M4 = m[1] * lg[1] * lg[1] + I[1]
 
-    M5 = m[2] * lg[2] * lg[2] + I[2] + m[3] * (l[2] * l[2] + lg[3] * lg[3] + 2.0 * l[2] * lc[3] * cos(q[2])) + I[3]
+    M5 = m[2] * lg[2] * lg[2] + I[2] + m[3] * (l[2] * l[2] + lg[3] * lg[3] + 2.0 * l[2] * lg[3] * cos(q[2])) + I[3]
     M6 = m[3] * (lg[3] * lg[3] + l[2] * lg[3] * cos(q[3])) + I[3]
     M7 = m[3] * (lg[3] * lg[3] + l[2] * lg[3] * cos(q[3])) + I[3]
     M8 = m[3] * lg[3] * lg[3] + I[3]
@@ -147,7 +147,7 @@ def phi_matrix(M, E):
     phi13, phi14, phi15, phi16, phi17, phi18 = 0, 0, M[4], M[5], E[2], E[6]
     phi19, phi20, phi21, phi22, phi23, phi24 = 0, 0, M[6], M[7], E[3], E[7]
     phi25, phi26, phi27, phi28, phi29, phi30 = E[0], E[1], E[2], E[3], 0, 0
-    phi31, phi32, phi33, phi34, phi35, phi36 = E[5], E[6], E[7], E[8], 0, 0
+    phi31, phi32, phi33, phi34, phi35, phi36 = E[4], E[5], E[6], E[7], 0, 0
 
     Phi = [[phi1, phi2, phi3, phi4, phi5, phi6],
            [phi7, phi8, phi9, phi10, phi11, phi12],
@@ -301,8 +301,8 @@ def jacobi_matrix(l, q):
 
 
 def print_non_lineaar_Characteristics():
-    k1 = [0.001, 10]
-    k2 = [0.001, 0.005, 0.01]
+    k1 = [0.003, 0.003]
+    k2 = [0.003, 0.003, 0.003]
     x_data = range(-50, 50)
     y1_data = []
     y2_data = []
