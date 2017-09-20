@@ -40,6 +40,8 @@ if __name__ == '__main__':
     dot_q = [0.0, 0.0, 0.0, 0.0]
     ddot_q = [0.0, 0.0, 0.0, 0.0]
     sum_q = [0.0, 0.0, 0.0, 0.0]
+
+
     # Desired Parametas
     qd = [radians(0), radians(0), radians(0), radians(0)]    # 目標角度
     dot_qd = [0.0, 0.0, 0.0, 0.0]
@@ -53,6 +55,13 @@ if __name__ == '__main__':
     thetad = [radians(0), radians(0), radians(0), radians(0)]    # 目標角度
     dot_thetad = [0.0, 0.0, 0.0, 0.0]
 
+    # Data list
+    (q_data, qd_data, dot_q_data,
+     ddot_q_data, sum_q_data, dot_qd_data) = [], [], [], [], [], []
+    (theta_data, thetad_data, dot_theta_data,
+     ddot_theta_data,
+     sum_theta_data, dot_thetad_data) = [], [], [], [], [], []
+
     # Non linear character Parametas
     k1 = sl.non_linear_parameta(0.003, 0.003)
     k2 = sl.non_linear_parameta(0.003, 0.003)
@@ -62,7 +71,7 @@ if __name__ == '__main__':
     k = [k1, k2, k3, k4]
 
     # Time Parametas
-    simulate_time = 10      # シミュレート時間
+    simulate_time = 30      # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
@@ -177,16 +186,16 @@ if __name__ == '__main__':
         time_log = pr.save_part_log(time, time_log)
 
         # Save link_data(radian)
-        qd_data = pr.make_data_log_list(qd)
-        q_data = pr.make_data_log_list(q)
-        dot_q_data = pr.make_data_log_list(dot_q)
-        ddot_q_data = pr.make_data_log_list(ddot_q)
+        qd_data = pr.make_data_log_list(qd, qd_data)
+        q_data = pr.make_data_log_list(q, q_data)
+        dot_q_data = pr.make_data_log_list(dot_q, dot_q_data)
+        ddot_q_data = pr.make_data_log_list(ddot_q, ddot_q_data)
 
         # Save Motor data(radian)
-        thetad_data = pr.make_data_log_list(thetad)
-        theta_data = pr.make_data_log_list(theta)
-        dot_theta_data = pr.make_data_log_list(dot_theta)
-        ddot_theta_data = pr.make_data_log_list(ddot_theta)
+        thetad_data = pr.make_data_log_list(thetad, thetad_data)
+        theta_data = pr.make_data_log_list(theta, theta_data)
+        dot_theta_data = pr.make_data_log_list(dot_theta, dot_theta_data)
+        ddot_theta_data = pr.make_data_log_list(ddot_theta, ddot_theta_data)
 
         # Position data
         x_data = pr.save_part_log(position[0], x_data)
@@ -197,7 +206,6 @@ if __name__ == '__main__':
         fp.write(position_data)
 
     # Print result
-
 
     fl.close()
     fm.close()

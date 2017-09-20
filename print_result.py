@@ -37,9 +37,10 @@ def save_angle_excel_log(time, q, qd, dot_q, ddot_q):
 
 def save_position_log(time, x_data, y_data, xd_data, yd_data,
                       lambdax_data, lambday_data):
-    log_data = "{}, {}, {}, {}, {}, {}\n". format(time, x_data, y_data,
-                                                  xd_data, yd_data,
-                                                  lambdax_data, lambday_data)
+    log_data = "{}, {}, {}, {}, {}, {}, {}\n". format(time, x_data, y_data,
+                                                      xd_data, yd_data,
+                                                      lambdax_data,
+                                                      lambday_data)
 
     return log_data
 
@@ -50,13 +51,14 @@ def save_part_log(x_data, x_data_log):
     return x_data_log
 
 
-def make_data_log_list(data_list):
-    out_put_data_set = []
-    for i in range(len(data_list)):
-        data_log = save_part_log(data_list[i], data_list[i])
-        out_put_data_set.append(data_log)
+def make_data_log_list(data_list, input_data_list):
 
-    return out_put_data_set
+    output_data_list = []
+    for i in range(len(data_list)):
+        data_list_part = save_part_log(data_list[i], input_data_list)
+        output_data_list.append(data_list_part)
+
+    return output_data_list
 
 
 if __name__ == '__main__':

@@ -95,10 +95,12 @@ def angular_acceleration_3dof(inv_phi, f, A):
 
 
 def motor_angular_acceleration(Mm, tau, B, dot_theta, F):
+    ddot_theta_data = []
     for i in range(len(tau)):
         ddot_theta = (tau[i] - B*dot_theta[i] - F[i])/Mm
+        ddot_theta_data.append(ddot_theta)
 
-    return ddot_theta
+    return ddot_theta_data
 
 
 def EulerMethod(q, dot_q, ddot_q, sampling_time):
