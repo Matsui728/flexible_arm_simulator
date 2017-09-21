@@ -52,10 +52,10 @@ if __name__ == '__main__':
     dot_thetad1, dot_thetad2 = 0.0, 0.0
 
     # Non linear character Parametas
-    k1 = [0.011, 0.011]
-    k2 = [0.009, 0.009]
+    k1 = [0.0038, 0.01]
+    k2 = [0.01, 0.02]
 
-    count_time = 30      # シミュレート時間
+    count_time = 20      # シミュレート時間
     sampling_time = 0.0001  # サンプリングタイム
 
     time_log = []
@@ -109,8 +109,8 @@ if __name__ == '__main__':
         h1, h2 = sl.coriolis_item_2dof(m2, l1, lg2, q2, dot_q1, dot_q2)
 
         # 重力項の定義
-        G1, G2 = sl.gravity_item_2dof(m1, m2, l1, lg1, lg2, q1, q2, g)
-
+        # G1, G2 = sl.gravity_item_2dof(m1, m2, l1, lg1, lg2, q1, q2, g)
+        G1, G2 = 0.0, 0.0
         # 入力
         tau1 = sl.PIDcontrol(kp1, kv1, ki1, thetad1, theta1,
                              dot_thetad1, dot_theta1, sum_theta1)
