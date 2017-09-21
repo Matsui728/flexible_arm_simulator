@@ -71,9 +71,10 @@ def sum_angle_difference(sum_angle, qd, q, sampling_time):
 
 
 def sum_position_difference(sum_x, xd, x, sampling_time):
-        sum_x += (xd - x)*sampling_time
+        output_sum_x = []
+        output_sum_x = sum_x + (xd - x)*sampling_time
 
-        return sum_x
+        return output_sum_x
 
 
 def calculate_angular_acceleration(Minv1, Minv2, tau1, tau2,
@@ -243,11 +244,12 @@ def restraint_part(l, q, dot_q):
     return dot_P, P, dot_Q, Q
 
 
-def input_forces(l, q, dot_q, h, D, K, Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1):
-    f1 = K[0] + Jt[0][0] * Fx + Jt[0][1] * Fy - h[0] - D * dot_q[0]
-    f2 = K[1] + Jt[1][0] * Fx + Jt[1][1] * Fy - h[1] - D * dot_q[1]
-    f3 = K[2] + Jt[2][0] * Fx + Jt[2][1] * Fy - h[2] - D * dot_q[2]
-    f4 = K[3] + Jt[3][0] * Fx + Jt[3][1] * Fy - h[3] - D * dot_q[3]
+def input_forces(l, q, dot_q, h, D, K, Jt,
+                 P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1):
+    f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0] - D * dot_q[0]
+    f2 = K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[1] - D * dot_q[1]
+    f3 = K[2] + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[2] - D * dot_q[2]
+    f4 = K[3] + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[3] - D * dot_q[3]
 
     A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
     A2 = -2 * s * dot_Q - s * s * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * sin(q[2]) * dot_q[2] * dot_q[2] - l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
