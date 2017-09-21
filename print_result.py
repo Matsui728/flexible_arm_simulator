@@ -19,7 +19,8 @@ def print_graph(title_name, x_data, y_data,
 
     plt.xlabel(xlabel_name, fontsize=15, fontname='Times New Roman')  # x軸のタイトル
     plt.ylabel(ylabel_name, fontsize=15, fontname='Times New Roman')  # y軸のタイトル
-    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
+#    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
+    plt.legend()
     plt.grid()
     plt.tight_layout()
 
@@ -52,11 +53,10 @@ def save_part_log(x_data, x_data_log):
 
 
 def make_data_log_list(data_list, input_data_list):
-
     output_data_list = []
     for i in range(len(data_list)):
-        data_list_part = save_part_log(data_list[i], input_data_list)
-        output_data_list.append(data_list_part)
+        data_part = save_part_log(data_list[i], input_data_list[i])
+        output_data_list.append(data_part)
 
     return output_data_list
 
