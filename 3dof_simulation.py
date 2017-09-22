@@ -91,7 +91,7 @@ if __name__ == '__main__':
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
-    xd = -0.1
+    xd = 00.
     yd = 0.4
     Xd = [xd, yd]
     x_data = []
@@ -264,6 +264,7 @@ if __name__ == '__main__':
         y_data = pr.save_part_log(position[1], y_data)
         yd_data = pr.save_part_log(yd, yd_data)
         p_data = [x_data, y_data, xd_data, yd_data]
+        py_data = [y_data]
 
         sum_x_data = pr.save_part_log(sum_X[0], sum_x_data)
         sum_y_data = pr.save_part_log(sum_X[1], sum_y_data)
@@ -278,7 +279,8 @@ if __name__ == '__main__':
         fp.write(position_data)
 
     # Print result
-    title_name = ['Link angle', 'Motor angle', 'Position', 'Binding force']
+    title_name = ['Link angle', 'Motor angle',
+                  'Time-Position', 'Binding force', 'Position']
 
     label_name1 = ['Link1', 'Link2', 'Link3', 'Link4']
     label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4']
@@ -290,25 +292,31 @@ if __name__ == '__main__':
     ylabel_name = ['Angle[deg]', 'Y[m]', 'Force [N]']
 
     plt.figure(figsize=(8, 7))
-    plt.subplot(221)
+    plt.subplot(321)
     pr.print_graph(title_name[0], time_log, q_data,
                    label_name[0], xlabel_name[0], ylabel_name[0],
                    num_plot_data=4)
 
-    plt.subplot(222)
+    plt.subplot(322)
     pr.print_graph(title_name[1], time_log, theta_data,
                    label_name[1], xlabel_name[0], ylabel_name[0],
                    num_plot_data=4)
 
-    plt.subplot(223)
+    plt.subplot(323)
     pr.print_graph(title_name[2], time_log, p_data,
-                   label_name[2], xlabel_name[1], ylabel_name[1],
+                   label_name[2], xlabel_name[0], ylabel_name[1],
                    num_plot_data=4)
 
-    plt.subplot(224)
+    plt.subplot(324)
     pr.print_graph(title_name[3], time_log, lam_data,
                    label_name[3], xlabel_name[0], ylabel_name[2],
                    num_plot_data=2)
+
+    plt.subplot(325)
+    pr.print_graph(title_name[4], p_data[0], py_data, 'Position',
+                   xlabel_name[1], ylabel_name[1], num_plot_data=1)
+
+
 
     plt.show()
 
