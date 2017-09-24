@@ -7,7 +7,7 @@ Created on Sat Sep  9 16:32:10 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import degrees, radians, sin, cos
+from math import degrees, radians, sin, cos, sqrt
 import print_result as pr
 import simlib as sl
 from tqdm import tqdm
@@ -30,10 +30,10 @@ if __name__ == '__main__':
     Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(20.0, 0.004, 5.0)
-    control_gain2 = sl.imput_gain(20.0, 0.004, 5.0)
+    control_gain1 = sl.imput_gain(10.0, 0.004, 5.0)
+    control_gain2 = sl.imput_gain(10.0, 0.004, 5.0)
     control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain4 = sl.imput_gain(20.0, 0.004, 5.0)
+    control_gain4 = sl.imput_gain(10.0, 0.004, 5.0)
     gain = [control_gain1, control_gain2, control_gain3, control_gain4]
 
     # Link data
@@ -79,25 +79,26 @@ if __name__ == '__main__':
      sum_theta_data, dot_thetad_data) = [], [], [], [], [], []
 
     # Non linear character Parametas
-    k1 = sl.non_linear_parameta(3.0, 1.0)
-    k2 = sl.non_linear_parameta(3.0, 1.0)
+    k1 = sl.non_linear_parameta(1.0, 1.0)
+    k2 = sl.non_linear_parameta(1.0, 1.0)
     k3 = sl.non_linear_parameta(0.0, 0.0)
-    k4 = sl.non_linear_parameta(3.0, 1.0)
+    k4 = sl.non_linear_parameta(1.0, 1.0)
 
     k = [k1, k2, k3, k4]
 
     # Time Parametas
-    simulate_time = 6      # シミュレート時間
+    simulate_time = 5      # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
-    xd = 00.
+    xd = -0.1
     yd = 0.4
     Xd = [xd, yd]
     x_data = []
     xd_data = []
     yd_data = []
     y_data = []
+    c_data = []
     sum_x = 0.0
     sum_y = 0.0
     sum_x_data = []
@@ -264,7 +265,7 @@ if __name__ == '__main__':
         y_data = pr.save_part_log(position[1], y_data)
         yd_data = pr.save_part_log(yd, yd_data)
         p_data = [x_data, y_data, xd_data, yd_data]
-        py_data = [y_data]
+        xy_data = [y_data]
 
         sum_x_data = pr.save_part_log(sum_X[0], sum_x_data)
         sum_y_data = pr.save_part_log(sum_X[1], sum_y_data)
@@ -291,7 +292,7 @@ if __name__ == '__main__':
     xlabel_name = ['Time[s]', 'X[m]']
     ylabel_name = ['Angle[deg]', 'Y[m]', 'Force [N]']
 
-    plt.figure(figsize=(8, 7))
+    plt.figure(figsize=(9, 7))
     plt.subplot(321)
     pr.print_graph(title_name[0], time_log, q_data,
                    label_name[0], xlabel_name[0], ylabel_name[0],
@@ -313,10 +314,10 @@ if __name__ == '__main__':
                    num_plot_data=2)
 
     plt.subplot(325)
-    pr.print_graph(title_name[4], p_data[0], py_data, 'Position',
+    pr.print_graph(title_name[4], p_data[0], xy_data, 'Position',
                    xlabel_name[1], ylabel_name[1], num_plot_data=1)
-
-
+    plt.xlim(-0.8, 0.8)
+    plt.ylim(-0.4, 0.8)
 
     plt.show()
 
