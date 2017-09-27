@@ -7,7 +7,7 @@ Created on Sat Sep  9 16:32:10 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import degrees, radians, sin, cos
+from math import degrees, radians, sin, cos, sqrt
 import print_result as pr
 import simlib as sl
 from tqdm import tqdm
@@ -30,10 +30,10 @@ if __name__ == '__main__':
     Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(1.0, 0.004, 0.0)
-    control_gain2 = sl.imput_gain(1.0, 0.004, 0.0)
+    control_gain1 = sl.imput_gain(10.0, 0.004, 5.0)
+    control_gain2 = sl.imput_gain(10.0, 0.004, 5.0)
     control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain4 = sl.imput_gain(1.0, 0.004, 0.0)
+    control_gain4 = sl.imput_gain(10.0, 0.004, 5.0)
     gain = [control_gain1, control_gain2, control_gain3, control_gain4]
 
     # Link data
@@ -79,27 +79,30 @@ if __name__ == '__main__':
      sum_theta_data, dot_thetad_data) = [], [], [], [], [], []
 
     # Non linear character Parametas
-    k1 = sl.non_linear_parameta(0.003, 0.003)
-    k2 = sl.non_linear_parameta(0.003, 0.003)
-    k3 = sl.non_linear_parameta(0.000, 0.000)
-    k4 = sl.non_linear_parameta(0.003, 0.003)
+    k1 = sl.non_linear_parameta(1.0, 1.0)
+    k2 = sl.non_linear_parameta(1.0, 1.0)
+    k3 = sl.non_linear_parameta(0.0, 0.0)
+    k4 = sl.non_linear_parameta(1.0, 1.0)
 
     k = [k1, k2, k3, k4]
 
     # Time Parametas
-    simulate_time = 30      # シミュレート時間
+    simulate_time = 5      # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
-    xd = 0.5
-    yd = 0.2
+    xd = -0.1
+    yd = 0.4
     Xd = [xd, yd]
     x_data = []
     xd_data = []
     yd_data = []
     y_data = []
-    sum_x = []
-    sum_y = []
+    c_data = []
+    sum_x = 0.0
+    sum_y = 0.0
+    sum_x_data = []
+    sum_y_data = []
 
     lamx_data = []
     lamy_data = []
@@ -163,10 +166,8 @@ if __name__ == '__main__':
         position = [X, Y]
 
         # 偏差積分値の計算
-        # sum_x = sl.sum_position_difference(sum_x, xd, X, sampling_time)
-        # sum_y = sl.sum_position_difference(sum_y, yd, Y, sampling_time)
-        sum_x = 0.0
-        sum_y = 0.0
+        sum_x = sl.sum_position_difference(sum_x, xd, X, sampling_time)
+        sum_y = sl.sum_position_difference(sum_y, yd, Y, sampling_time)
 
         sum_X = [sum_x, sum_y]
 
@@ -183,7 +184,7 @@ if __name__ == '__main__':
         dot_P, P, dot_Q, Q = sl.restraint_part(ll, q, dot_q)
 
         f, A = sl.input_forces(ll, q, dot_q, H, D, K,
-                               Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=30)
+                               Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1)
 
         # 関節角加速度の計算
         ddot_q = sl.angular_acceleration_3dof(invPhi, f, A)
@@ -264,6 +265,10 @@ if __name__ == '__main__':
         y_data = pr.save_part_log(position[1], y_data)
         yd_data = pr.save_part_log(yd, yd_data)
         p_data = [x_data, y_data, xd_data, yd_data]
+        xy_data = [y_data]
+
+        sum_x_data = pr.save_part_log(sum_X[0], sum_x_data)
+        sum_y_data = pr.save_part_log(sum_X[1], sum_y_data)
 
         # Binding Force Data
         lamx_data = pr.save_part_log(lam[0], lamx_data)
@@ -275,37 +280,63 @@ if __name__ == '__main__':
         fp.write(position_data)
 
     # Print result
-    title_name = ['Link angle', 'Motor angle', 'Position', 'Binding force']
+    title_name = ['Link angle', 'Motor angle',
+                  'Time-Position', 'Binding force', 'Position',
+                  'Non lineaar characteristics']
 
     label_name1 = ['Link1', 'Link2', 'Link3', 'Link4']
     label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4']
     label_name3 = ['X position', 'Y position', 'Xd position', 'Yd position']
-    label_name4 = ['Lambda X', 'Lambda Y']
-    label_name = [label_name1, label_name2, label_name3, label_name4]
+    label_name4 = ['λx', 'λy']
+    label_name5 = ["k1 = {}, k2 = {}". format(k1[0], k1[1])]
+    label_name = [label_name1, label_name2, label_name3, label_name4,
+                  label_name5]
 
-    xlabel_name = ['Time[s]', 'X[m]', 'Lambda X']
-    ylabel_name = ['Angle[deg]', 'Y[m]', 'Lambda Y']
+    xlabel_name = ['Time[s]', 'X[m]', 'θ-q']
+    ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K']
 
-    plt.figure(figsize=(6, 6))
-    plt.subplot(221)
+    plt.figure(figsize=(9, 7))
+    plt.subplot(321)
     pr.print_graph(title_name[0], time_log, q_data,
                    label_name[0], xlabel_name[0], ylabel_name[0],
                    num_plot_data=4)
 
-    plt.subplot(222)
+    plt.subplot(322)
     pr.print_graph(title_name[1], time_log, theta_data,
                    label_name[1], xlabel_name[0], ylabel_name[0],
                    num_plot_data=4)
 
-    plt.subplot(223)
+    plt.subplot(323)
     pr.print_graph(title_name[2], time_log, p_data,
-                   label_name[2], xlabel_name[1], ylabel_name[1],
+                   label_name[2], xlabel_name[0], ylabel_name[1],
                    num_plot_data=4)
 
-    plt.subplot(224)
+    plt.subplot(324)
     pr.print_graph(title_name[3], time_log, lam_data,
-                   label_name[3], xlabel_name[2], ylabel_name[2],
+                   label_name[3], xlabel_name[0], ylabel_name[2],
                    num_plot_data=2)
+
+    plt.subplot(325)
+    pr.print_graph(title_name[4], p_data[0], xy_data, 'Position',
+                   xlabel_name[1], ylabel_name[3], num_plot_data=1)
+    plt.xlim(-0.8, 0.8)
+    plt.ylim(-0.4, 0.8)
+
+    plt.subplot(326)
+    dif_data = [-3.14]
+    K_part = []
+
+    for i in range(628):
+        d = -3.14 + i*0.01
+        dif_data.append(d)
+    for i in range(len(dif_data)):
+        kpart1 = k1[0] + k1[1]*pow(dif_data[i], 2)
+        kpart2 = kpart1*dif_data[i]
+        K_part.append(kpart2)
+        K_data = [K_part]
+
+    pr.print_graph(title_name[5], dif_data, K_data, label_name[4],
+                   xlabel_name[2], ylabel_name[4], num_plot_data=1)
 
     plt.show()
 
