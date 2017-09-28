@@ -8,6 +8,14 @@ Created on Wed Sep  6 10:56:16 2017
 import numpy as np
 import matplotlib.pyplot as plt
 from math import degrees
+from pathlib import Path
+import shutil
+import configparser
+
+cp = configparser.ConfigParser()
+cp.read('config')
+root_dir = cp.get('dataset_dir', 'dir_path')
+
 
 
 def print_graph(title_name, x_data, y_data,
@@ -59,6 +67,26 @@ def make_data_log_list(data_list, input_data_list):
         output_data_list.append(data_part)
 
     return output_data_list
+
+
+def move_excel_data(data_root=root_dir):
+    file_name = ['3dof_simulation_link_data.csv',
+                 '3dof_simulation_motor_data.csv',
+                 '3dof_simulation_position_data.csv']
+
+    data_dir = Path(data_root) / 'flexible_arm_simulator'
+    cache_data = []
+    for i in range(len(file_name)):
+        cache = data_dir / file_name[i]
+        cache_data.append(cache)
+
+    if not data_dir.exists():
+        data_dir.mkdir(exist_ok=True)
+
+    if not
+
+    for i in range(len(file_name)):
+        shutil.move('./' + file_name[i], data_dir)
 
 
 if __name__ == '__main__':

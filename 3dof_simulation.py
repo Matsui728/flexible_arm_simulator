@@ -7,11 +7,18 @@ Created on Sat Sep  9 16:32:10 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import degrees, radians, sin, cos, sqrt
+from math import degrees, radians, sin, cos
 import print_result as pr
 import simlib as sl
 from tqdm import tqdm
+import configparser
+import shutil
+from pathlib import Path
 
+
+cp = configparser.ConfigParser()
+cp.read('config')
+root_dir = cp.get('dataset_dir', 'dir_path')
 
 if __name__ == '__main__':
     # Parameters
@@ -343,3 +350,6 @@ if __name__ == '__main__':
     fl.close()
     fm.close()
     fp.close()
+
+    pr.move_excel_data()
+    print('Tasks are completed!')
