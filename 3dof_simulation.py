@@ -121,6 +121,22 @@ if __name__ == '__main__':
     fl = open('3dof_simulation_link_data.csv', 'w')
     fm = open('3dof_simulation_motor_data.csv', 'w')
     fp = open('3dof_simulation_position_data.csv', 'w')
+    fc = open('Parameter_data.txt', 'w')
+
+    fc.write('[Parameters]\n')
+    fc.write('Xd = {}, Yd ={}\n'. format(Xd[0], Xd[1])
+             + 'k1 = [{},{}, {}, {}],'. format(k[0][0], k[1][0],
+                                               k[2][0], k[3][0])
+             + 'k2 = [{}, {}, {}, {}]\n'. format(k[0][1], k[1][1],
+                                                 k[2][1], k[3][1]))
+
+    for i in range(len(gain)):
+        fc.write('Gain{} = [kp={}, kv={}, ki={}]\n'. format(i, gain[i][0],
+                                                            gain[i][1],
+                                                            gain[i][2]))
+
+    fc.write('simulate time = {}[s]'. format(simulate_time))
+    fc.write('sampling time = {}[s]\n'. format(sampling_time))
 
     fl.write('Time[s], q1, q2, q3, q4, qd1, qd2, qd3, qd4,'
              + 'dot_q1, dot_q2, dot_q3, dot_q4,'
@@ -350,6 +366,7 @@ if __name__ == '__main__':
     fl.close()
     fm.close()
     fp.close()
+    fc.close()
 
     pr.move_excel_data()
     print('Tasks are completed!')

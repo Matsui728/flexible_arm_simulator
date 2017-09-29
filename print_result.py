@@ -11,6 +11,8 @@ from math import degrees
 from pathlib import Path
 import shutil
 import configparser
+import datetime
+import os
 
 cp = configparser.ConfigParser()
 cp.read('config')
@@ -72,21 +74,25 @@ def make_data_log_list(data_list, input_data_list):
 def move_excel_data(data_root=root_dir):
     file_name = ['3dof_simulation_link_data.csv',
                  '3dof_simulation_motor_data.csv',
-                 '3dof_simulation_position_data.csv']
+                 '3dof_simulation_position_data.csv',
+                 'Parameter_data.txt']
+
+    now = datetime.datetime.now()
 
     data_dir = Path(data_root) / 'flexible_arm_simulator'
+    if not data_dir.exists():
+        data_dir.mkdir(exist_ok=True)
+
     cache_data = []
     for i in range(len(file_name)):
         cache = data_dir / file_name[i]
         cache_data.append(cache)
 
-    if not data_dir.exists():
-        data_dir.mkdir(exist_ok=True)
-
-    if not
+    data_folder_dir = Path(data_dir) / '{0:%Y%m%d-%H%M%S}'.format(now)
+    data_folder_dir.mkdir(exist_ok=True)
 
     for i in range(len(file_name)):
-        shutil.move('./' + file_name[i], data_dir)
+        shutil.move('./' + file_name[i], data_folder_dir)
 
 
 if __name__ == '__main__':
