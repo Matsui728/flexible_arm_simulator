@@ -19,9 +19,9 @@ cp.read('config')
 root_dir = cp.get('dataset_dir', 'dir_path')
 
 
-
 def print_graph(title_name, x_data, y_data,
-                label_name, xlabel_name, ylabel_name, num_plot_data=1):
+                label_name, xlabel_name, ylabel_name, num_plot_data=1,
+                legend_mode=False):
     plt.title(title_name, fontsize=15, fontname='Times New Roman')
 
     for i in range(num_plot_data):
@@ -29,8 +29,10 @@ def print_graph(title_name, x_data, y_data,
 
     plt.xlabel(xlabel_name, fontsize=15, fontname='Times New Roman')  # x軸のタイトル
     plt.ylabel(ylabel_name, fontsize=15, fontname='Times New Roman')  # y軸のタイトル
-#    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
-    plt.legend(fontsize=8)
+    if legend_mode == True:
+        plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
+    elif legend_mode == False:
+        plt.legend(fontsize=8)
     plt.grid()
     plt.tight_layout()
 
@@ -75,7 +77,8 @@ def move_excel_data(data_root=root_dir):
     file_name = ['3dof_simulation_link_data.csv',
                  '3dof_simulation_motor_data.csv',
                  '3dof_simulation_position_data.csv',
-                 'Parameter_data.txt']
+                 'Parameter_data.txt',
+                 'result.png']
 
     now = datetime.datetime.now()
 

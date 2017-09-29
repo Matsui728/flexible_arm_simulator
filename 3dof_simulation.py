@@ -318,7 +318,7 @@ if __name__ == '__main__':
     xlabel_name = ['Time[s]', 'X[m]', 'θ-q']
     ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K']
 
-    plt.figure(figsize=(9, 7))
+    plt.figure(figsize=(11, 12))
     plt.subplot(321)
     pr.print_graph(title_name[0], time_log, q_data,
                    label_name[0], xlabel_name[0], ylabel_name[0],
@@ -361,6 +361,7 @@ if __name__ == '__main__':
     pr.print_graph(title_name[5], dif_data, K_data, label_name[4],
                    xlabel_name[2], ylabel_name[4], num_plot_data=1)
 
+    plt.savefig('result.png')
     plt.show()
 
     fl.close()
