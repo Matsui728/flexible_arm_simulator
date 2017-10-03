@@ -260,6 +260,18 @@ def input_forces(l, q, dot_q, h, D, K, Jt,
     return f, A
 
 
+def out_forces(x, max_force=10, bias=1):
+    y = bias*x
+    if y > max_force:
+        y = max_force
+        F = y
+
+    else:
+        F = y
+
+    return F
+
+
 def binding_force(inv_phi, f, A):
     lambda_x = inv_phi[4][0] * f[0] + inv_phi[4][1] * f[1] + inv_phi[4][2] * f[2] + inv_phi[4][3] * f[3] + inv_phi[4][4] * A[0] + inv_phi[4][5] * A[1]
     lambda_y = inv_phi[5][0] * f[0] + inv_phi[5][1] * f[1] + inv_phi[5][2] * f[2] + inv_phi[5][3] * f[3] + inv_phi[5][4] * A[0] + inv_phi[5][5] * A[1]
