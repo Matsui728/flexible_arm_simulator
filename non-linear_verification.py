@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Sep  9 16:32:10 2017
+Created on Sat Sep 30 14:55:28 2017
 
 @author: kawalab
 """
@@ -35,10 +35,10 @@ if __name__ == '__main__':
     Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(10.0, 0.004, 5.0)
-    control_gain2 = sl.imput_gain(10.0, 0.004, 5.0)
+    control_gain1 = sl.imput_gain(10.0, 0.004, 1.0)
+    control_gain2 = sl.imput_gain(10.0, 0.004, 1.0)
     control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain4 = sl.imput_gain(10.0, 0.004, 5.0)
+    control_gain4 = sl.imput_gain(10.0, 0.004, 1.0)
     gain = [control_gain1, control_gain2, control_gain3, control_gain4]
 
     # Link data
@@ -84,20 +84,20 @@ if __name__ == '__main__':
      sum_theta_data, dot_thetad_data) = [], [], [], [], [], []
 
     # Non linear character Parametas
-    k1 = sl.non_linear_parameta(1.0, 1.0)
-    k2 = sl.non_linear_parameta(1.0, 1.0)
+    k1 = sl.non_linear_parameta(2.0, 1.0)
+    k2 = sl.non_linear_parameta(2.0, 1.0)
     k3 = sl.non_linear_parameta(0.0, 0.0)
-    k4 = sl.non_linear_parameta(1.0, 1.0)
+    k4 = sl.non_linear_parameta(2.0, 1.0)
 
     k = [k1, k2, k3, k4]
 
     # Time Parametas
-    simulate_time = 5      # シミュレート時間
+    simulate_time = 20      # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
-    xd = -0.14122975389
-    yd = 0.2817
+    xd = 2.7*pow(10, -17)
+    yd = 0.42426
     Xd = [xd, yd]
     x_data = []
     xd_data = []
@@ -108,6 +108,7 @@ if __name__ == '__main__':
     sum_y = 0.0
     sum_x_data = []
     sum_y_data = []
+    (Fx, Fy, Fx_data, Fy_data) = [], [], [], []
 
     lamx_data = []
     lamy_data = []
@@ -158,6 +159,10 @@ if __name__ == '__main__':
                                                       ddot_theta,
                                                       sampling_time)
 
+        # 外力の設定
+        Fx = sl.out_forces(time, bias=1)
+        Fy = 0.0
+
         # 慣性行列の定義
         mm = sl.moment_matrix_3dof(m, ll, lg, Inertia, q)
 
@@ -205,7 +210,7 @@ if __name__ == '__main__':
         dot_P, P, dot_Q, Q = sl.restraint_part(ll, q, dot_q)
 
         f, A = sl.input_forces(ll, q, dot_q, H, D, K,
-                               Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1)
+                               Jt, P, Q, dot_P, dot_Q, Fx, Fy=0, s=1)
 
         # 関節角加速度の計算
         ddot_q = sl.angular_acceleration_3dof(invPhi, f, A)
@@ -296,6 +301,11 @@ if __name__ == '__main__':
         lamy_data = pr.save_part_log(lam[1], lamy_data)
         lam_data = [lamx_data, lamy_data]
 
+        # Other Data
+        Fx_data = pr.save_part_log(Fx, Fx_data)
+        Fy_data = pr.save_part_log(Fy, Fy_data)
+        output_data = [Fx_data, Fy_data]
+
         fl.write(link_data)
         fm.write(motor_data)
         fp.write(position_data)
@@ -303,47 +313,54 @@ if __name__ == '__main__':
     # Print result
     title_name = ['Link angle', 'Motor angle',
                   'Time-Position', 'Binding force', 'Position',
-                  'Non lineaar characteristics']
+                  'Non lineaar characteristics', 'Output force']
 
     label_name1 = ['Link1', 'Link2', 'Link3', 'Link4']
     label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4']
     label_name3 = ['X position', 'Y position', 'Xd position', 'Yd position']
     label_name4 = ['λx', 'λy']
     label_name5 = ["k1 = {}, k2 = {}". format(k1[0], k1[1])]
+    label_name6 = ['Fx', 'Fy']
     label_name = [label_name1, label_name2, label_name3, label_name4,
-                  label_name5]
+                  label_name5, label_name6]
 
     xlabel_name = ['Time[s]', 'X[m]', 'θ-q']
-    ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K']
+    ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]',
+                   'Y[m]', 'K[N・m]']
 
     plt.figure(figsize=(11, 12))
-    plt.subplot(321)
+#    plt.figure(figsize=(8, 7))
+
+    plt.subplot(421)
     pr.print_graph(title_name[0], time_log, q_data,
                    label_name[0], xlabel_name[0], ylabel_name[0],
                    num_plot_data=4)
 
-    plt.subplot(322)
+    plt.subplot(422)
     pr.print_graph(title_name[1], time_log, theta_data,
                    label_name[1], xlabel_name[0], ylabel_name[0],
                    num_plot_data=4)
 
-    plt.subplot(323)
+    plt.subplot(423)
     pr.print_graph(title_name[2], time_log, p_data,
                    label_name[2], xlabel_name[0], ylabel_name[1],
                    num_plot_data=4)
 
-    plt.subplot(324)
+    plt.subplot(424)
     pr.print_graph(title_name[3], time_log, lam_data,
                    label_name[3], xlabel_name[0], ylabel_name[2],
                    num_plot_data=2)
 
-    plt.subplot(325)
+#     plt.xlim(0, 3)
+    plt.ylim(-3, 3)
+
+    plt.subplot(425)
     pr.print_graph(title_name[4], p_data[0], xy_data, 'Position',
                    xlabel_name[1], ylabel_name[3], num_plot_data=1)
     plt.xlim(-0.8, 0.8)
     plt.ylim(-0.4, 0.8)
 
-    plt.subplot(326)
+    plt.subplot(426)
     dif_data = [-3.14]
     K_part = []
 
@@ -359,7 +376,14 @@ if __name__ == '__main__':
     pr.print_graph(title_name[5], dif_data, K_data, label_name[4],
                    xlabel_name[2], ylabel_name[4], num_plot_data=1)
 
+    plt.subplot(427)
+    pr.print_graph(title_name[6], time_log, output_data,
+                   label_name[5], xlabel_name[0], ylabel_name[2],
+                   num_plot_data=2)
+    plt.ylim(0, 15)
+
     plt.savefig('result.png')
+
     plt.show()
 
     fl.close()
