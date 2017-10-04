@@ -48,6 +48,28 @@ def PID_potiton_control_3dof(gain, Xd, X, Jt, dot_theta, sum_X):
     return Tau
 
 
+def new_PID_position_control(gain, Xd, X, Jt, sum_X, Fconstant=0):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + (Jt[0][0] * Fconstant + Jt[0][1] * Fconstant)
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + (Jt[1][0] * Fconstant + Jt[1][1] * Fconstant)
+
+    tau3 = -(Jt[2][0] * Fconstant + Jt[2][1] * Fconstant)
+    tau4 = -(Jt[3][0] * Fconstant + Jt[3][1] * Fconstant)
+
+    Tau = [tau1, tau2, tau3, tau4]
+
+    return Tau
+
+
 def moment_inertia(m, l):
     moment = m*l*l/12
 
