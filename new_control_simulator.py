@@ -35,10 +35,10 @@ if __name__ == '__main__':
     Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(0.2, 0.004, 0.000)
-    control_gain2 = sl.imput_gain(0.2, 0.004, 0.000)
+    control_gain1 = sl.imput_gain(0.35, 0.004, 0.000)
+    control_gain2 = sl.imput_gain(0.35, 0.004, 0.000)
     control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain4 = sl.imput_gain(0.2, 0.004, 0.000)
+    control_gain4 = sl.imput_gain(0.35, 0.004, 0.000)
     gain = [control_gain1, control_gain2, control_gain3, control_gain4]
 
     # Link data
@@ -96,8 +96,8 @@ if __name__ == '__main__':
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
-    xd = -0.1
-    yd = 0.4
+    xd = -0.3
+    yd = 0.2
     Xd = [xd, yd]
     x_data = []
     xd_data = []
@@ -111,6 +111,8 @@ if __name__ == '__main__':
 
     lamx_data = []
     lamy_data = []
+
+    Fconstant = 0.0
 
     time_log = []
 
@@ -135,7 +137,7 @@ if __name__ == '__main__':
 
     fc.write('simulate time = {}[s]'. format(simulate_time))
     fc.write('sampling time = {}[s]\n'. format(sampling_time))
-
+    fc.write('fc = {}\n'. format(Fconstant))
     fl.write('Time[s], q1, q2, q3, q4, qd1, qd2, qd3, qd4,'
              + 'dot_q1, dot_q2, dot_q3, dot_q4,'
              + 'ddot_q1, ddot_q2, ddot_q3, ddot_q4\n')
@@ -193,8 +195,10 @@ if __name__ == '__main__':
         sum_X = [sum_x, sum_y]
 
         # モータ入力
-        Tau = sl.new_PID_position_control(gain, Xd, position, Jt, sum_X,
-                                          Fconstant=0.0)
+#        Tau = sl.new_PID_position_control(gain, Xd, position, Jt, sum_X, Fconstant)
+        Tau = sl.new_PID_position_control_ver2(gain, Xd, position, Jt, sum_X,
+                                               Fconstant)
+
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
