@@ -35,10 +35,10 @@ if __name__ == '__main__':
     Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(0.35, 0.004, 0.000)
-    control_gain2 = sl.imput_gain(0.35, 0.004, 0.000)
+    control_gain1 = sl.imput_gain(3.0, 0.004, 0.000)
+    control_gain2 = sl.imput_gain(3.0, 0.004, 0.000)
     control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain4 = sl.imput_gain(0.35, 0.004, 0.000)
+    control_gain4 = sl.imput_gain(3.0, 0.004, 0.000)
     gain = [control_gain1, control_gain2, control_gain3, control_gain4]
 
     # Link data
@@ -84,10 +84,10 @@ if __name__ == '__main__':
      sum_theta_data, dot_thetad_data) = [], [], [], [], [], []
 
     # Non linear character Parametas
-    k1 = sl.non_linear_parameta(3.0, 1.0)
-    k2 = sl.non_linear_parameta(3.0, 1.0)
+    k1 = sl.non_linear_parameta(3, 1)
+    k2 = sl.non_linear_parameta(3, 1)
     k3 = sl.non_linear_parameta(0.0, 0.0)
-    k4 = sl.non_linear_parameta(3.0, 1.0)
+    k4 = sl.non_linear_parameta(3, 1)
 
     k = [k1, k2, k3, k4]
 
@@ -96,8 +96,8 @@ if __name__ == '__main__':
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
-    xd = -0.3
-    yd = 0.2
+    xd = -0.2
+    yd = 0.3
     Xd = [xd, yd]
     x_data = []
     xd_data = []
@@ -196,9 +196,12 @@ if __name__ == '__main__':
 
         # モータ入力
 #        Tau = sl.new_PID_position_control(gain, Xd, position, Jt, sum_X, Fconstant)
-        Tau = sl.new_PID_position_control_ver2(gain, Xd, position, Jt, sum_X,
-                                               Fconstant)
-
+#        Tau = sl.new_PID_position_control_ver2(gain, Xd, position, Jt, sum_X,
+#                                               Fconstant)
+        Tau = sl.new_PID_position_control_ver3(gain, dot_theta, Xd, position,
+                                               Jt, sum_X, Fconstant)
+#        Tau = sl.new_PID_position_control_ver4(time, dot_theta, gain, Xd, position,
+#                                               Jt, sum_X, Fconstant)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
