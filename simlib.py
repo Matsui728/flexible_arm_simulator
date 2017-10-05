@@ -48,7 +48,7 @@ def PID_potiton_control_3dof(gain, Xd, X, Jt, dot_theta, sum_X):
     return Tau
 
 
-def new_PID_position_control(gain, Xd, X, Jt, sum_X, Fconstant=0):
+def new_PID_position_control(gain, dot_theta, Xd, X, Jt, sum_X, Fconstant=0):
     kp = []
     kv = []
     ki = []
@@ -59,8 +59,8 @@ def new_PID_position_control(gain, Xd, X, Jt, sum_X, Fconstant=0):
         kv.append(Kv)
         ki.append(Ki)
 
-    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + (Jt[0][0] * Fconstant + Jt[0][1] * Fconstant)
-    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + (Jt[1][0] * Fconstant + Jt[1][1] * Fconstant)
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + (Jt[0][0] * Fconstant + Jt[0][1] * Fconstant)
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + (Jt[1][0] * Fconstant + Jt[1][1] * Fconstant)
 
     tau3 = 0
     tau4 = -(Jt[3][0] * Fconstant + Jt[3][1] * Fconstant)
@@ -70,7 +70,7 @@ def new_PID_position_control(gain, Xd, X, Jt, sum_X, Fconstant=0):
     return Tau
 
 
-def new_PID_position_control_ver2(gain, Xd, X, Jt, sum_X, Fconstant=0):
+def new_PID_position_control_ver2(gain, dot_theta, Xd, X, Jt, sum_X, Fconstant=0):
     kp = []
     kv = []
     ki = []
@@ -81,11 +81,11 @@ def new_PID_position_control_ver2(gain, Xd, X, Jt, sum_X, Fconstant=0):
         kv.append(Kv)
         ki.append(Ki)
 
-    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))- kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1])
-    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))- kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1])
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + (Jt[0][0] * Fconstant + Jt[0][1] * Fconstant)
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + (Jt[1][0] * Fconstant + Jt[1][1] * Fconstant)
 
     tau3 = 0
-    tau4 = kp[3] * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1])) + ki[3] * (Jt[3][0] * sum_X[0] + Jt[3][1] * sum_X[1]) - (Jt[3][0] * Fconstant + Jt[3][1] * Fconstant)
+    tau4 = kp[3] * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1])) - kv[3] * dot_theta[3] + ki[3] * (Jt[3][0] * sum_X[0] + Jt[3][1] * sum_X[1]) - (Jt[3][0] * Fconstant + Jt[3][1] * Fconstant)
 
     Tau = [tau1, tau2, tau3, tau4]
 
@@ -106,8 +106,8 @@ def new_PID_position_control_ver3(gain, dot_theta, Xd, X, Jt, sum_X, constantF=0
     er_vector = normal_vector(Xd[0], Xd[1])
     Jdt = desired_jacobi(Jt, er_vector)
 
-    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + 0.01 * constantF * Jdt[0]
-    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + 0.01 * constantF * Jdt[1]
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) +  constantF * Jdt[0]
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) +  constantF * Jdt[1]
 
     tau3 = 0
     tau4 = -constantF*Jdt[3]
@@ -157,12 +157,73 @@ def new_PID_position_control_ver4(time, dot_theta,  gain, Xd, X, Jt, sum_X, cons
     return Tau
 
 
+def new_PID_position_control_ver5(gain, dot_theta, Xd, X, Jt, sum_X, constantF=0):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    er_vector = normal_vector(Xd[0], Xd[1])
+    Jdt = desired_jacobi(Jt, er_vector)
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + constantF * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) * Jdt[0]
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + constantF * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) * Jdt[1]
+
+    tau3 = 0
+    tau4 = constantF*(Jt[3][0] * sum_X[0] + Jt[3][1] * sum_X[1])*Jdt[3]
+
+    Tau = [tau1, tau2, tau3, tau4]
+
+    return Tau
+
+
+def new_PID_position_control_ver6(gain, dot_theta, Xd, X,
+                                  Jt, sum_X, constantF=0):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    er_vector = normal_vector(Xd[0], Xd[1])
+    Jdt = desired_jacobi(Jt, er_vector)
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + constantF * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) * Jdt[0]
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + constantF * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) * Jdt[1]
+
+    tau3 = 0
+    tau4 = constantF*(Jt[3][0] * sum_X[0] + Jt[3][1] * sum_X[1])*Jdt[3] - kv[3] * dot_theta[3]
+
+    if X[0] < Xd[0] and X[1] > Xd[1]:
+        er_vector = normal_vector(Xd[0], Xd[1])
+        er_vector = [-1*er_vector[0], -1*er_vector[1]]
+        Jdt = desired_jacobi(Jt, er_vector)
+        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + constantF * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) * Jdt[0]
+        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + constantF * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) * Jdt[1]
+
+        tau3 = 0
+        tau4 = constantF*(Jt[3][0] * sum_X[0] + Jt[3][1] * sum_X[1])*Jdt[3] - kv[3] * dot_theta[3]
+
+    Tau = [tau1, tau2, tau3, tau4]
+
+    return Tau
+
 def normal_vector(Xd, Yd):
     z = pow(Xd, 2) + pow(Yd, 2)
     Absolute_value = sqrt(z)
     vector = [Xd/Absolute_value, Yd/Absolute_value]
 
     return vector
+
 
 def desired_jacobi(Jt, normal_vector):
     Jdt1 = (Jt[0][0] * normal_vector[0] + Jt[0][1] * normal_vector[1])
