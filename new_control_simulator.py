@@ -92,7 +92,7 @@ if __name__ == '__main__':
     k = [k1, k2, k3, k4]
 
     # Time Parametas
-    simulate_time = 20      # シミュレート時間
+    simulate_time = 10      # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     lamx_data = []
     lamy_data = []
 
-    Fconstant = 0.0
+    Fconstant = 3
 
     time_log = []
 
@@ -195,13 +195,17 @@ if __name__ == '__main__':
         sum_X = [sum_x, sum_y]
 
         # モータ入力
-#        Tau = sl.new_PID_position_control(gain, Xd, position, Jt, sum_X, Fconstant)
-#        Tau = sl.new_PID_position_control_ver2(gain, Xd, position, Jt, sum_X,
-#                                               Fconstant)
-        Tau = sl.new_PID_position_control_ver3(gain, dot_theta, Xd, position,
-                                               Jt, sum_X, Fconstant)
-#        Tau = sl.new_PID_position_control_ver4(time, dot_theta, gain, Xd, position,
+#        Tau = sl.new_PID_position_control(gain, dot_theta,
+#                                          Xd, position, Jt, sum_X, Fconstant)
+#        Tau = sl.new_PID_position_control_ver2(gain, dot_theta, Xd,
+#                                               position, Jt, sum_X, Fconstant)
+#        Tau = sl.new_PID_position_control_ver3(gain, dot_theta, Xd, position,
 #                                               Jt, sum_X, Fconstant)
+#        Tau = sl.new_PID_position_control_ver4(time, dot_theta, gain,
+#                                                Xd, position,
+#                                               Jt, sum_X, Fconstant)
+        Tau = sl.new_PID_position_control_ver6(gain, dot_theta, Xd, position,
+                                               Jt, sum_X, Fconstant)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
