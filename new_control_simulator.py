@@ -23,22 +23,22 @@ if __name__ == '__main__':
     m = [1.0, 1.0, 1.0, 1.0]  # 質量
     ll = [0.3, 0.3, 0.3, 0.3]  # リンク長さ
     lg = [ll[0]/2, ll[1]/2, ll[2]/2, ll[3]/2]  # 重心位置
-    D = 0.1  # リンク粘性
+    D = 1.0  # リンク粘性
     g = 9.8  # 重力加速度
 
     # Prametas of motor
     Mm = 34.7*pow(10, -7)       # モータの慣性モーメント
-    B = 0.0  # モータの粘性
+    B = 0.004  # モータの粘性
 
     # 慣性モーメント
     Inertia = []
     Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(3.0, 0.004, 0.000)
-    control_gain2 = sl.imput_gain(3.0, 0.004, 0.000)
+    control_gain1 = sl.imput_gain(15.0, 0.00, 0.000)
+    control_gain2 = sl.imput_gain(15.0, 0.00, 0.000)
     control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain4 = sl.imput_gain(3.0, 0.004, 0.000)
+    control_gain4 = sl.imput_gain(15.0, 0.00, 0.000)
     gain = [control_gain1, control_gain2, control_gain3, control_gain4]
 
     # Link data
@@ -112,7 +112,8 @@ if __name__ == '__main__':
     lamx_data = []
     lamy_data = []
 
-    Fconstant = 3
+    Fconstant = 35
+    sigma=0.1
 
     time_log = []
 
@@ -204,8 +205,10 @@ if __name__ == '__main__':
 #        Tau = sl.new_PID_position_control_ver4(time, dot_theta, gain,
 #                                                Xd, position,
 #                                               Jt, sum_X, Fconstant)
-        Tau = sl.new_PID_position_control_ver6(gain, dot_theta, Xd, position,
-                                               Jt, sum_X, Fconstant)
+#        Tau = sl.new_PID_position_control_ver8(gain, dot_theta, Xd, position,
+#                                              Jt, sum_X, Fconstant)
+        Tau = sl.new_PID_position_control_ver9(gain, dot_theta, Xd, position,
+                                               Jt, sum_X, Fconstant, sigma)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
