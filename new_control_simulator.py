@@ -92,7 +92,7 @@ if __name__ == '__main__':
     k = [k1, k2, k3, k4]
 
     # Time Parametas
-    simulate_time = 10      # シミュレート時間
+    simulate_time = 5      # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
@@ -112,8 +112,10 @@ if __name__ == '__main__':
     lamx_data = []
     lamy_data = []
 
-    Fconstant = 35
-    sigma=0.1
+    f1_data, f2_data, f4_data = [], [], []
+
+    Fconstant = 8
+    eps = 0.1
 
     time_log = []
 
@@ -207,8 +209,12 @@ if __name__ == '__main__':
 #                                               Jt, sum_X, Fconstant)
 #        Tau = sl.new_PID_position_control_ver8(gain, dot_theta, Xd, position,
 #                                              Jt, sum_X, Fconstant)
-        Tau = sl.new_PID_position_control_ver9(gain, dot_theta, Xd, position,
-                                               Jt, sum_X, Fconstant, sigma)
+        Tau, actf = sl.new_PID_position_control_ver9(gain, dot_theta, Xd,
+                                                     position, Jt, sum_X,
+                                                     Fconstant, eps)
+#        Tau, actf = sl.new_PID_position_control_ver10(gain, dot_theta, Xd,
+#                                                      position, Jt, sum_X,
+#                                                      Fconstant, eps)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
@@ -310,6 +316,12 @@ if __name__ == '__main__':
         lamy_data = pr.save_part_log(lam[1], lamy_data)
         lam_data = [lamx_data, lamy_data]
 
+        # otherdata
+        f1_data = pr.save_part_log(actf[0], f1_data)
+        f2_data = pr.save_part_log(actf[1], f2_data)
+        f4_data = pr.save_part_log(actf[2], f4_data)
+        f_data = [f1_data, f2_data, f4_data]
+
         fl.write(link_data)
         fm.write(motor_data)
         fp.write(position_data)
@@ -317,15 +329,16 @@ if __name__ == '__main__':
     # Print result
     title_name = ['Link angle', 'Motor angle',
                   'Time-Position', 'Restraining force', 'Position',
-                  'Non lineaar characteristics']
+                  'Non lineaar characteristics', 'Acting force']
 
     label_name1 = ['Link1', 'Link2', 'Link3', 'Link4']
     label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4']
     label_name3 = ['X position', 'Y position', 'Xd position', 'Yd position']
     label_name4 = ['λx', 'λy']
     label_name5 = ["k1 = {}, k2 = {}". format(k1[0], k1[1])]
+    label_name6 = ['f1', 'f2', 'f4']
     label_name = [label_name1, label_name2, label_name3, label_name4,
-                  label_name5]
+                  label_name5, label_name6]
 
     xlabel_name = ['Time[s]', 'X[m]', 'θ-q']
     ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K']
@@ -358,20 +371,26 @@ if __name__ == '__main__':
     plt.ylim(-0.4, 0.8)
 
     plt.subplot(326)
-    dif_data = [-3.14]
-    K_part = []
+#
+#    dif_data = [-3.14]
+#    K_part = []
+#
+#    for i in range(628):
+#        d = -3.14 + i*0.01
+#        dif_data.append(d)
+#    for i in range(len(dif_data)):
+#        kpart1 = k1[0] + k1[1]*pow(dif_data[i], 2)
+#        kpart2 = kpart1*dif_data[i]
+#        K_part.append(kpart2)
+#        K_data = [K_part]
+#
+#    pr.print_graph(title_name[5], dif_data, K_data, label_name[4],
+#                   xlabel_name[2], ylabel_name[4], num_plot_data=1)
+#
 
-    for i in range(628):
-        d = -3.14 + i*0.01
-        dif_data.append(d)
-    for i in range(len(dif_data)):
-        kpart1 = k1[0] + k1[1]*pow(dif_data[i], 2)
-        kpart2 = kpart1*dif_data[i]
-        K_part.append(kpart2)
-        K_data = [K_part]
-
-    pr.print_graph(title_name[5], dif_data, K_data, label_name[4],
-                   xlabel_name[2], ylabel_name[4], num_plot_data=1)
+    pr.print_graph(title_name[6], time_log, f_data,
+                   label_name[5], xlabel_name[0], ylabel_name[2],
+                   num_plot_data=3)
 
     plt.savefig('result.png')
     plt.show()
