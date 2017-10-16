@@ -353,6 +353,54 @@ def new_PID_position_control_ver10(gain, dot_theta, Xd, X, Jt, sum_X,
 
     return Tau, f
 
+
+def new_PID_position_control_ver11(gain, dot_theta, Xd, X, Jt, sum_X, R,
+                                   constantF=0, eps=0.1):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+    er_vector = unit_vector(X[0], X[1])
+    Jdt = desired_jacobi(Jt, er_vector)
+
+    f_base = force_Normalization(norm, eps, constantF, R)
+
+    f1 = f_base
+    f2 = f_base
+    f4 = -f_base
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1 * Jdt[0]
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2 * Jdt[1]
+
+    tau3 = 0
+    tau4 = f4*Jdt[3]
+
+
+    if norm <  eps:
+
+        f1 = constantF * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
+        f2 = constantF * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
+        f4 = -constantF * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1]))
+
+        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1 * Jdt[0]
+        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2 * Jdt[1]
+
+        tau3 = 0
+        tau4 = f4*Jdt[3]
+
+    Tau = [tau1, tau2, tau3, tau4]
+    f = [f1, f2, f4]
+
+    return Tau, f
+
+
 def normal_vector(Xd, Yd):
     z = pow(Xd, 2) + pow(Yd, 2)
     Absolute_value = sqrt(z)
@@ -374,6 +422,16 @@ def difference_norm(x, y, xd, yd):
     norm = sqrt(squaring_norm)
 
     return norm
+
+
+def force_Normalization(norm, eps, constantf, R):
+    a = 1
+    x = norm - eps
+    y = a / x
+
+    f = constantf * y * (R[0] + R[1] - eps) / a
+
+    return f
 
 
 def desired_jacobi(Jt, normal_vector):
