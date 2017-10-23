@@ -17,6 +17,12 @@ def imput_gain(kp, kv, ki):
     return gain
 
 
+def unit_P_control(kp, x, xd):
+    tau = kp*(xd-x)
+
+    return tau
+
+
 def PID_angle_control(gain, qd, q, dot_qd, dot_q, sum_q):
     Tau = []
     for i in range(len(gain)):
@@ -353,6 +359,175 @@ def new_PID_position_control_ver10(gain, dot_theta, Xd, X, Jt, sum_X,
 
     return Tau, f
 
+
+def new_PID_position_control_ver11(time, gain, dot_theta, Xd, X, Jt, sum_X, R,
+                                   constantF=0, eps=0.1):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+    er_vector = unit_vector(X[0], X[1])
+    Jdt = desired_jacobi(Jt, er_vector)
+
+    f_base = force_Normalization(norm, eps, constantF, R)
+    if time == 0.0:
+        f_base = 0.0
+
+    f1 = f_base
+    f2 = f_base
+    f4 = -f_base
+
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1 * Jdt[0]
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2 * Jdt[1]
+
+    tau3 = 0
+    tau4 = kp[3] * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1])) + f4*Jdt[3]
+
+
+    if norm < eps:
+
+#        f1 = constantF * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
+#        f2 = constantF * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
+#        f4 = -constantF * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1]))
+
+        f1 = constantF
+        f2 = constantF
+        f4 = -constantF
+
+
+        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1 * Jdt[0]
+        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2 * Jdt[1]
+
+        tau3 = 0
+        tau4 = f4*Jdt[3]
+
+    Tau = [tau1, tau2, tau3, tau4]
+    f = [f1, f2, f4]
+
+    return Tau, f
+
+
+def new_PID_position_control_ver12(gain, dot_theta, Xd, X, Jt, sum_X, R,
+                                   constantF=0, eps=0.1):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+    er_vector = unit_vector(X[0], X[1])
+    Jdt = desired_jacobi(Jt, er_vector)
+
+    f1 = 0
+    f2 = 0
+    f4 = 0
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1 * Jdt[0]
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2 * Jdt[1]
+
+    tau3 = 0
+    tau4 = kp[3] * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1])) + f4*Jdt[3]
+
+
+    if norm <=  eps:
+
+        f1 = constantF * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
+        f2 = constantF * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
+        f4 = -constantF * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1]))
+
+
+
+
+        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1 * Jdt[0]
+        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2 * Jdt[1]
+
+        tau3 = 0
+        tau4 = f4*Jdt[3]
+
+    Tau = [tau1, tau2, tau3, tau4]
+    f = [f1, f2, f4]
+
+    return Tau, f
+
+
+def positioncontorol_modified(gain, dot_theta, Xd, X, Jt, sum_X, F,
+                              force_gain, ddot_eforce, dot_eforce, eforce,
+                              sampling_time, constantF=0, eps=0.1):
+    kp = []
+    kv = []
+    ki = []
+
+
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+    er_vector = unit_vector(X[0], X[1])
+    Jdt = desired_jacobi(Jt, er_vector)
+
+    f1 = 0
+    f2 = 0
+    f4 = 0
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1 * Jdt[0]
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2 * Jdt[1]
+
+    tau3 = 0
+    tau4 = kp[3] * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1])) + f4*Jdt[3]
+
+    if norm <=  eps:
+
+        fd1 = constantF * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
+        fd2 = constantF * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
+        fd4 = -constantF * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1]))
+
+
+#        fd1 = constantF
+#        fd2 = constantF
+#        fd4 = -constantF
+
+
+        ddot_eforce[0] = unit_P_control(force_gain, f1, fd1)
+        ddot_eforce[1] = unit_P_control(force_gain, f2, fd2)
+        ddot_eforce[2] = unit_P_control(force_gain, f4, fd4)
+        eforce, dot_eforce, ddot_eforce = EulerMethod(eforce, dot_eforce,
+                                                      ddot_eforce,
+                                                      sampling_time)
+
+        f1 = F[0] + ddot_eforce[0]
+        f2 = F[1] + ddot_eforce[1]
+        f4 = F[2] + ddot_eforce[2]
+
+
+        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) - kv[0] * dot_theta[0] + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1 * Jdt[0]
+        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) - kv[1] * dot_theta[1] + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2 * Jdt[1]
+
+        tau3 = 0
+        tau4 = f4*Jdt[3]
+
+    Tau = [tau1, tau2, tau3, tau4]
+    f = [f1, f2, f4]
+
+    return Tau, f
+
+
 def normal_vector(Xd, Yd):
     z = pow(Xd, 2) + pow(Yd, 2)
     Absolute_value = sqrt(z)
@@ -374,6 +549,21 @@ def difference_norm(x, y, xd, yd):
     norm = sqrt(squaring_norm)
 
     return norm
+
+
+def force_Normalization(norm, eps, constantf, R):
+    a = 1
+    x = norm - eps
+    X = a / x
+    maxX = 500
+    minX = (1/(R[0]+R[1]-eps))
+
+    f = constantf * (X - minX)/ (maxX- minX)
+
+    if X >= maxX:
+        f = constantf
+
+    return f
 
 
 def desired_jacobi(Jt, normal_vector):

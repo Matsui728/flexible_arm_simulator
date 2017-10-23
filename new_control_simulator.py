@@ -22,6 +22,7 @@ if __name__ == '__main__':
     # Parameters
     m = [1.0, 1.0, 1.0, 1.0]  # 質量
     ll = [0.3, 0.3, 0.3, 0.3]  # リンク長さ
+    L = [ll[0], ll[1]]
     lg = [ll[0]/2, ll[1]/2, ll[2]/2, ll[3]/2]  # 重心位置
     D = 1.0  # リンク粘性
     g = 9.8  # 重力加速度
@@ -59,6 +60,16 @@ if __name__ == '__main__':
     # Desired Parametas
     thetad = [radians(0), radians(0), radians(0), radians(0)]    # 目標角度
     dot_thetad = [0.0, 0.0, 0.0, 0.0]
+    # Input force
+    f1_data, f2_data, f4_data = [], [], []
+    Fconstant = 0.1
+    force_gain = 0.001
+    actf = []
+
+
+    eforce = [0.0, 0.0, 0.0]
+    dot_eforce = [0.0, 0.0, 0.0]
+    ddot_eforce = [0.0, 0.0, 0.0]
 
     # Data list
     (q1_data, q2_data, q3_data, q4_data) = [], [], [], []
@@ -92,7 +103,7 @@ if __name__ == '__main__':
     k = [k1, k2, k3, k4]
 
     # Time Parametas
-    simulate_time = 5      # シミュレート時間
+    simulate_time = 20.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
 
     # Deseired Position
@@ -112,9 +123,6 @@ if __name__ == '__main__':
     lamx_data = []
     lamy_data = []
 
-    f1_data, f2_data, f4_data = [], [], []
-
-    Fconstant = 8
     eps = 0.1
 
     time_log = []
@@ -209,12 +217,18 @@ if __name__ == '__main__':
 #                                               Jt, sum_X, Fconstant)
 #        Tau = sl.new_PID_position_control_ver8(gain, dot_theta, Xd, position,
 #                                              Jt, sum_X, Fconstant)
-        Tau, actf = sl.new_PID_position_control_ver9(gain, dot_theta, Xd,
-                                                     position, Jt, sum_X,
-                                                     Fconstant, eps)
+#        Tau, actf = sl.new_PID_position_control_ver9(gain, dot_theta, Xd,
+#                                                     position, Jt, sum_X,
+#                                                     Fconstant, eps)
 #        Tau, actf = sl.new_PID_position_control_ver10(gain, dot_theta, Xd,
 #                                                      position, Jt, sum_X,
 #                                                      Fconstant, eps)
+#        Tau, actf = sl.new_PID_position_control_ver11(time, gain, dot_theta, Xd,
+#                                                      position, Jt, sum_X, L,
+#                                                      Fconstant, eps)
+        Tau, actf = sl.positioncontorol_modified(gain, dot_theta, Xd, position, Jt, sum_X, actf,
+                                                 force_gain, ddot_eforce, dot_eforce, eforce,
+                                                 sampling_time, Fconstant, eps)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
