@@ -763,12 +763,12 @@ def non_linear_item(k, e):
     return K
 
 
-def restraint_part(l, q, dot_q):
+def restraint_part(l, q, dot_q, d):
     dot_P = -l[0] * sin(q[0]) * dot_q[0] - l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) + l[2] * sin(q[2]) * dot_q[2] + l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3])
-    P = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1]) - l[2] * cos(q[2]) - l[3] * cos(q[2] + q[3])
+    P = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1]) - l[2] * cos(q[2]) - l[3] * cos(q[2] + q[3]) - d[0]
 
     dot_Q = l[0] * cos(q[0]) * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3])
-    Q = l[0] * sin(q[0]) + l[1] * sin(q[0] + q[1]) - l[2] * sin(q[2]) - l[3] * sin(q[2] + q[3])
+    Q = l[0] * sin(q[0]) + l[1] * sin(q[0] + q[1]) - l[2] * sin(q[2]) - l[3] * sin(q[2] + q[3]) - d[1]
 
     return dot_P, P, dot_Q, Q
 
