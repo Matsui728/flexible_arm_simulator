@@ -71,6 +71,8 @@ if __name__ == '__main__':
     dot_eforce = [0.0, 0.0, 0.0]
     ddot_eforce = [0.0, 0.0, 0.0]
 
+    offset_vector = [1.0, 0.0]
+
     # Data list
     (q1_data, q2_data, q3_data, q4_data) = [], [], [], []
     (qd1_data, qd2_data, qd3_data, qd4_data) = [], [], [], []
@@ -236,7 +238,7 @@ if __name__ == '__main__':
         K = sl.non_linear_item(k, e)
 
         # 拘束力とダイナミクス右辺の計算
-        dot_P, P, dot_Q, Q = sl.restraint_part(ll, q, dot_q)
+        dot_P, P, dot_Q, Q = sl.restraint_part(ll, q, dot_q, offset_vector)
 
         f, A = sl.input_forces(ll, q, dot_q, H, D, K,
                                Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1)
