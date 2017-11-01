@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Sep  9 16:32:10 2017
+Created on Mon Oct 30 15:49:51 2017
 
 @author: kawalab
 """
@@ -13,17 +13,27 @@ import simlib as sl
 from tqdm import tqdm
 import configparser
 
-
+# データログ保存パス
 cp = configparser.ConfigParser()
 cp.read('config')
 root_dir = cp.get('dataset_dir', 'dir_path')
 
+
 if __name__ == '__main__':
     # Parameters
-    m = [1.0, 1.0, 1.0, 1.0]  # 質量
-    ll = [0.3, 0.3, 0.3, 0.3]  # リンク長さ
-    L = [ll[0], ll[1]]
-    lg = [ll[0]/2, ll[1]/2, ll[2]/2, ll[3]/2]  # 重心位置
+    m = [1.0, 1.0, 0.5, 1.0, 1.0]  # 質量
+    arm1_m = [m[0], m[1], m[2]]
+    arm2_m = [m[3], m[4]]
+
+    ll = [0.3, 0.3, 0.1, 0.35, 0.35]  # リンク長さ
+    link1 = [ll[0], ll[1], ll[2]]
+    link2 = [ll[3], ll[4]]
+    L = [link1, link2]
+
+    lg = [ll[0]/2, ll[1]/2, ll[2]/2, ll[3]/2, ll[4]/2]  # 重心位置
+    arm1_lg = [lg[0], lg[1], lg[2]]
+    arm2_lg = [lg[3], lg[4]]
+
     D = 1.0  # リンク粘性
     g = 9.8  # 重力加速度
 
@@ -35,64 +45,102 @@ if __name__ == '__main__':
     Inertia = []
     Inertia = sl.link_inertia(m, ll, Inertia)
 
+    arm1_Inertia = [Inertia[0], Inertia[1], Inertia[2]]
+    arm2_Inertia = [Inertia[3], Inertia[4]]
+
     # ゲイン調整
-    control_gain1 = sl.imput_gain(15.0, 0.00, 0.000)
-    control_gain2 = sl.imput_gain(15.0, 0.00, 0.000)
-    control_gain3 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain4 = sl.imput_gain(15.0, 0.00, 0.000)
-    gain = [control_gain1, control_gain2, control_gain3, control_gain4]
+    control_gain1 = sl.imput_gain(3.0, 0.00, 0.000)
+    control_gain2 = sl.imput_gain(3.0, 0.00, 0.000)
+    control_gain3 = sl.imput_gain(3.0, 0.0, 0.0)
+    control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain5 = sl.imput_gain(3.0, 0.00, 0.000)
+    gain = [control_gain1, control_gain2, control_gain3,
+            control_gain4, control_gain5]
 
     # Link data
-    q = [radians(45), radians(90), radians(45), radians(90)]    # 初期角度
-    dot_q = [0.0, 0.0, 0.0, 0.0]
-    ddot_q = [0.0, 0.0, 0.0, 0.0]
-    sum_q = [0.0, 0.0, 0.0, 0.0]
+    q = [radians(150), radians(-70), radians(-20),
+         radians(135), radians(-90)]  # 初期角度
+    dot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
+    ddot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
+    sum_q = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+    arm1_q = [q[0], q[1], q[2]]
+    arm2_q = [q[3], q[4]]
+
+    arm1_dotq = [dot_q[0], dot_q[1], dot_q[2]]
+    arm2_dotq = [dot_q[3], dot_q[4]]
+
+    arm1_ddotq = [ddot_q[0], ddot_q[1], ddot_q[2]]
+    arm2_ddotq = [ddot_q[3], ddot_q[4]]
 
     # Desired Parametas
-    qd = [radians(0), radians(0), radians(0), radians(0)]    # 目標角度
-    dot_qd = [0.0, 0.0, 0.0, 0.0]
+    qd = [radians(0), radians(0), radians(0),
+          radians(0), radians(0)]  # 目標角度
+    dot_qd = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Motor data
-    theta = [radians(45), radians(90), radians(45), radians(90)]    # 初期角度
-    dot_theta = [0.0, 0.0, 0.0, 0.0]
-    ddot_theta = [0.0, 0.0, 0.0, 0.0]
-    sum_theta = [0.0, 0.0, 0.0, 0.0]
+    theta = [radians(150), radians(-70), radians(-20),
+             radians(135), radians(-90)]    # 初期角度
+    dot_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
+    ddot_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
+    sum_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+    arm1_theta = [theta[0], theta[1], theta[2]]
+    arm2_theta = [theta[3], theta[4]]
+
+    arm1_dottheta = [dot_theta[0], dot_theta[1], dot_theta[2]]
+    arm2_dottheta = [dot_theta[3], dot_theta[4]]
+
+    arm1_ddottheta = [ddot_theta[0], ddot_theta[1], ddot_theta[2]]
+    arm2_ddottheta = [ddot_theta[3], ddot_theta[4]]
 
     # Desired Parametas
-    thetad = [radians(0), radians(0), radians(0), radians(0)]    # 目標角度
-    dot_thetad = [0.0, 0.0, 0.0, 0.0]
+    thetad = [radians(0), radians(0), radians(0),
+              radians(0), radians(0)]    # 目標角度
+    dot_thetad = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Input force
-    f1_data, f2_data, f4_data = [], [], []
+    f1_data, f2_data, f3_data, f5_data = [], [], []
     Fconstant = 0.1
     force_gain = 0.001
     actf = []
 
-
-    eforce = [0.0, 0.0, 0.0]
-    dot_eforce = [0.0, 0.0, 0.0]
-    ddot_eforce = [0.0, 0.0, 0.0]
-
-    offset_vector = [1.0, 0.0]
-
     # Data list
-    (q1_data, q2_data, q3_data, q4_data) = [], [], [], []
-    (qd1_data, qd2_data, qd3_data, qd4_data) = [], [], [], []
-    (dot_q1_data, dot_q2_data, dot_q3_data, dot_q4_data) = [], [], [], []
-    (ddot_q1_data, ddot_q2_data, ddot_q3_data, ddot_q4_data) = [], [], [], []
-    (sum_q1_data, sum_q2_data, sum_q3_data, sum_q4_data) = [], [], [], []
-    (dot_qd1_data, dot_qd2_data, dot_qd3_data, dot_qd4_data) = [], [], [], []
+    # linl data log
+    (q1_data, q2_data, q3_data, q4_data, q5_data) = [], [], [], [], []
+
+    (qd1_data, qd2_data, qd3_data, qd4_data, qd5_data) = [], [], [], [], []
+
+    (dot_q1_data, dot_q2_data, dot_q3_data,
+     dot_q4_data, dot_q5_data) = [], [], [], [], []
+
+    (ddot_q1_data, ddot_q2_data, ddot_q3_data,
+     ddot_q4_data, ddot_q5_data) = [], [], [], [], []
+
+    (sum_q1_data, sum_q2_data, sum_q3_data,
+     sum_q4_data, sum_q5_data) = [], [], [], [], []
+
+    (dot_qd1_data, dot_qd2_data, dot_qd3_data,
+     dot_qd4_data, dot_qd5_data) = [], [], [], [], []
+
     (q_data, qd_data, dot_q_data,
      ddot_q_data, sum_q_data, dot_qd_data) = [], [], [], [], [], []
 
-    (theta1_data, theta2_data, theta3_data, theta4_data) = [], [], [], []
-    (thetad1_data, thetad2_data, thetad3_data, thetad4_data) = [], [], [], []
+    # motor data log
+    (theta1_data, theta2_data, theta3_data,
+     theta4_data, theta5_data) = [], [], [], [], []
+
+    (thetad1_data, thetad2_data, thetad3_data,
+     thetad4_data, thetad5_data) = [], [], [], [], []
+
     (dot_theta1_data, dot_theta2_data,
-     dot_theta3_data, dot_theta4_data) = [], [], [], []
+     dot_theta3_data, dot_theta4_data, dot_theta5_data) = [], [], [], [], []
+
     (ddot_theta1_data, ddot_theta2_data,
-     ddot_theta3_data, ddot_theta4_data) = [], [], [], []
+     ddot_theta3_data, ddot_theta4_data, ddot_theta5_data) = [], [], [], [], []
+
     (sum_theta1_data, sum_theta2_data,
-     sum_theta3_data, sum_theta4_data) = [], [], [], []
+     sum_theta3_data, sum_theta4_data, sum_theta4_data) = [], [], [], [], []
 
     (theta_data, thetad_data, dot_theta_data,
      ddot_theta_data,
@@ -101,14 +149,16 @@ if __name__ == '__main__':
     # Non linear character Parametas
     k1 = sl.non_linear_parameta(3, 1)
     k2 = sl.non_linear_parameta(3, 1)
-    k3 = sl.non_linear_parameta(0.0, 0.0)
-    k4 = sl.non_linear_parameta(3, 1)
+    k3 = sl.non_linear_parameta(3, 1)
+    k4 = sl.non_linear_parameta(0.0, 0.0)
+    k5 = sl.non_linear_parameta(3, 1)
 
-    k = [k1, k2, k3, k4]
+    k = [k1, k2, k3, k4, k5]
 
     # Time Parametas
     simulate_time = 20.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
+    time_log = []
 
     # Deseired Position
     xd = -0.2
@@ -127,12 +177,11 @@ if __name__ == '__main__':
     lamx_data = []
     lamy_data = []
 
-    eps = 0.1
-
-    time_log = []
+    eps = 0.1  # 判定半径
 
     ST = int(sl.simulation_time(simulate_time, sampling_time))
 
+    # file open
     fl = open('3dof_simulation_link_data.csv', 'w')
     fm = open('3dof_simulation_motor_data.csv', 'w')
     fp = open('3dof_simulation_position_data.csv', 'w')
@@ -140,10 +189,10 @@ if __name__ == '__main__':
 
     fc.write('[Parameters]\n')
     fc.write('Xd = {}, Yd ={}\n'. format(Xd[0], Xd[1])
-             + 'k1 = [{},{}, {}, {}],'. format(k[0][0], k[1][0],
-                                               k[2][0], k[3][0])
-             + 'k2 = [{}, {}, {}, {}]\n'. format(k[0][1], k[1][1],
-                                                 k[2][1], k[3][1]))
+             + 'k1 = [{},{},{},{},{}],'. format(k[0][0], k[1][0],
+                                                k[2][0], k[3][0],  k[4][0])
+             + 'k2 = [{},{},{},{},{}]\n'. format(k[0][1], k[1][1],
+                                                 k[2][1], k[3][1],  k[4][1]))
 
     for i in range(len(gain)):
         fc.write('Gain{} = [kp={}, kv={}, ki={}]\n'. format(i, gain[i][0],
@@ -153,14 +202,14 @@ if __name__ == '__main__':
     fc.write('simulate time = {}[s]'. format(simulate_time))
     fc.write('sampling time = {}[s]\n'. format(sampling_time))
     fc.write('fc = {}\n'. format(Fconstant))
-    fl.write('Time[s], q1, q2, q3, q4, qd1, qd2, qd3, qd4,'
-             + 'dot_q1, dot_q2, dot_q3, dot_q4,'
-             + 'ddot_q1, ddot_q2, ddot_q3, ddot_q4\n')
+    fl.write('Time[s], q1, q2, q3, q4,q5, qd1, qd2, qd3, qd4, qd5'
+             + 'dot_q1, dot_q2, dot_q3, dot_q4, dot_q5'
+             + 'ddot_q1, ddot_q2, ddot_q3, ddot_q4, ddot_q5\n')
 
-    fm.write('Time[s], theta1, theta2, theta3, theta4,'
-             + 'thetad1, thetad2, thetad3, thetad4,'
-             + 'dot_theta1, dot_theta2, dot_theta3, dot_theta4,'
-             + 'ddot_theta1, ddot_theta2, ddot_theta3, ddot_theta4\n')
+    fm.write('Time[s], theta1, theta2, theta3, theta4, theta5'
+             + 'thetad1, thetad2, thetad3, thetad4, thetad5'
+             + 'dot_theta1, dot_theta2, dot_theta3, dot_theta4, dot_theta5'
+             + 'ddot_theta1, ddot_theta2, ddot_theta3, ddot_theta4, ddot_theta5\n')
 
     fp.write('Time[s], X, Y, Xd, Yd, lambdax, lambday\n')
 
@@ -176,80 +225,69 @@ if __name__ == '__main__':
                                                       sampling_time)
 
         # 慣性行列の定義
-        mm = sl.moment_matrix_3dof(m, ll, lg, Inertia, q)
+        mm1 = sl.moment_matrix_serial3dof(arm1_m, link1, arm1_lg,
+                                          arm1_Inertia, arm1_q)
+
+        mm2 = sl.moment_matrix_serial2dof(arm2_m, link2, arm2_lg,
+                                          arm2_Inertia, arm2_q)
+
+        M = [mm1, mm2]
 
         # コリオリ項の定義
-        H = sl.coriolis_item_3dof(m, ll, lg, Inertia, q, dot_q)
+        H1 = sl.coriolis_item_serial3dof(arm1_m, link1,
+                                         arm1_lg, arm1_q, arm1_dotq)
+
+        H2 = sl.coriolis_item_serial2dof(arm2_m, link2,
+                                         arm2_lg, arm2_q, arm2_dotq)
+
+        H = [H1, H2]
 
         # 重力項の定義
-        g1, g2, g3, g4 = 0.0, 0.0, 0.0, 0.0
-        G = [g1, g2, g3, g4]
+        g1, g2, g3, g4, g5 = 0.0, 0.0, 0.0, 0.0, 0.0
+        G = [g1, g2, g3, g4, g5]
 
         # 二回微分値の導出
-        E = sl.twice_differential_values(ll, q)
+        E = sl.define_E(ll, q)
 
         # 逆行列の掃き出し
-        Phi = sl.phi_matrix(mm, E)
+        Phi = sl.phi_matrix_4dof(mm1, mm2, E)
         invPhi = sl.inverse_matrix(Phi)
 
         # ヤコビとヤコビ転置
-        J = sl.jacobi_matrix(ll, q)
-
+        J1 = sl.jacobi_serial3dof(link1, arm1_q)
+        J2 = sl.jacobi_serial2dof(link2, arm2_q)
+        J = [J1, J2]
         Jt = sl.transpose_matrix(J)
 
         # 手先位置導出
-        X = ll[0] * cos(q[0]) + ll[1] * cos(q[0] + q[1])
-        Y = ll[0] * sin(q[0]) + ll[1] * sin(q[0] + q[1])
+        X = ll[0] * cos(q[0]) + ll[1] * cos(q[0] + q[1]) + ll[2] * cos(q[0] + q[1] + q[2])
+        Y = ll[0] * sin(q[0]) + ll[1] * sin(q[0] + q[1]) + ll[2] * sin(q[0] + q[1] + q[2])
         position = [X, Y]
-
 
         # 偏差積分値の計算
         sum_x = sl.sum_position_difference(sum_x, xd, X, sampling_time)
         sum_y = sl.sum_position_difference(sum_y, yd, Y, sampling_time)
-
         sum_X = [sum_x, sum_y]
 
-        # モータ入力
-#        Tau = sl.new_PID_position_control(gain, dot_theta,
-#                                          Xd, position, Jt, sum_X, Fconstant)
-#        Tau = sl.new_PID_position_control_ver2(gain, dot_theta, Xd,
-#                                               position, Jt, sum_X, Fconstant)
-#        Tau = sl.new_PID_position_control_ver3(gain, dot_theta, Xd, position,
-#                                               Jt, sum_X, Fconstant)
-#        Tau = sl.new_PID_position_control_ver4(time, dot_theta, gain,
-#                                                Xd, position,
-#                                               Jt, sum_X, Fconstant)
-#        Tau = sl.new_PID_position_control_ver8(gain, dot_theta, Xd, position,
-#                                              Jt, sum_X, Fconstant)
-#        Tau, actf = sl.new_PID_position_control_ver9(gain, dot_theta, Xd,
-#                                                     position, Jt, sum_X,
-#                                                     Fconstant, eps)
-#        Tau, actf = sl.new_PID_position_control_ver10(gain, dot_theta, Xd,
-#                                                      position, Jt, sum_X,
-#                                                      Fconstant, eps)
-#        Tau, actf = sl.new_PID_position_control_ver11(time, gain, dot_theta, Xd,
-#                                                      position, Jt, sum_X, L,
-#                                                      Fconstant, eps)
-        Tau, actf = sl.positioncontorol_modified(gain, dot_theta, Xd, position, Jt, sum_X, actf,
-                                                 force_gain, ddot_eforce, dot_eforce, eforce,
-                                                 sampling_time, Fconstant, eps)
+        Tau, actf = sl.new_PID_position_control_4dof(gain, dot_theta, Xd,
+                                                     position, Jt, sum_X,
+                                                     Fconstant, eps)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
-
         K = sl.non_linear_item(k, e)
 
         # 拘束力とダイナミクス右辺の計算
-        dot_P, P, dot_Q, Q = sl.restraint_part(ll, q, dot_q, offset_vector)
+        dot_P, P, dot_Q, Q = sl.restraint_item(ll, q, dot_q)
 
-        f, A = sl.input_forces(ll, q, dot_q, H, D, K,
-                               Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1)
+        f, A = sl.input_forces_4dof(ll, q, dot_q, H, D, K,
+                                    Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1)
 
         # 関節角加速度の計算
         ddot_q = sl.angular_acceleration_3dof(invPhi, f, A)
 
         # 拘束項
-        lam = sl.binding_force(invPhi, f, A)
+        lam = sl.binding_force_4dof(invPhi, f, A)
 
         # モータ角加速度の計算
         ddot_theta = sl.motor_angular_acceleration(Mm, Tau, B,
@@ -271,52 +309,66 @@ if __name__ == '__main__':
         qd2_data = pr.save_part_log(degrees(qd[1]), qd2_data)
         qd3_data = pr.save_part_log(degrees(qd[2]), qd3_data)
         qd4_data = pr.save_part_log(degrees(qd[3]), qd4_data)
-        qd_data = [qd1_data, qd2_data, qd3_data, qd4_data]
+        qd5_data = pr.save_part_log(degrees(qd[4]), qd5_data)
+        qd_data = [qd1_data, qd2_data, qd3_data, qd4_data, qd5_data]
 
         q1_data = pr.save_part_log(degrees(q[0]), q1_data)
         q2_data = pr.save_part_log(degrees(q[1]), q2_data)
         q3_data = pr.save_part_log(degrees(q[2]), q3_data)
         q4_data = pr.save_part_log(degrees(q[3]), q4_data)
-        q_data = [q1_data, q2_data, q3_data, q4_data]
+        q5_data = pr.save_part_log(degrees(q[4]), q5_data)
+        q_data = [q1_data, q2_data, q3_data, q4_data, q5_data]
 
         dot_q1_data = pr.save_part_log(dot_q[0], dot_q1_data)
         dot_q2_data = pr.save_part_log(dot_q[1], dot_q2_data)
         dot_q3_data = pr.save_part_log(dot_q[2], dot_q3_data)
         dot_q4_data = pr.save_part_log(dot_q[3], dot_q4_data)
-        dot_q_data = [dot_q1_data, dot_q2_data, dot_q3_data, dot_q4_data]
+        dot_q5_data = pr.save_part_log(degrees(dot_q[4]), dot_q5_data)
+        dot_q_data = [dot_q1_data, dot_q2_data, dot_q3_data,
+                      dot_q4_data, dot_q5_data]
 
         ddot_q1_data = pr.save_part_log(ddot_q[0], ddot_q1_data)
         ddot_q2_data = pr.save_part_log(ddot_q[1], ddot_q2_data)
         ddot_q3_data = pr.save_part_log(ddot_q[2], ddot_q3_data)
         ddot_q4_data = pr.save_part_log(ddot_q[3], ddot_q4_data)
-        ddot_q_data = [ddot_q1_data, ddot_q2_data, ddot_q3_data, ddot_q4_data]
+        ddot_q5_data = pr.save_part_log(degrees(ddot_q[4]), ddot_q5_data)
+        ddot_q_data = [ddot_q1_data, ddot_q2_data, ddot_q3_data,
+                       ddot_q4_data, ddot_q5_data]
 
         # Save Motor data(radian)
         thetad1_data = pr.save_part_log(degrees(thetad[0]), thetad1_data)
         thetad2_data = pr.save_part_log(degrees(thetad[1]), thetad2_data)
         thetad3_data = pr.save_part_log(degrees(thetad[2]), thetad3_data)
         thetad4_data = pr.save_part_log(degrees(thetad[3]), thetad4_data)
-        thetad_data = [thetad1_data, thetad2_data, thetad3_data, thetad4_data]
+        thetad5_data = pr.save_part_log(degrees(thetad[4]), thetad5_data)
+        thetad_data = [thetad1_data, thetad2_data, thetad3_data,
+                       thetad4_data, thetad5_data]
 
         theta1_data = pr.save_part_log(degrees(theta[0]), theta1_data)
         theta2_data = pr.save_part_log(degrees(theta[1]), theta2_data)
         theta3_data = pr.save_part_log(degrees(theta[2]), theta3_data)
         theta4_data = pr.save_part_log(degrees(theta[3]), theta4_data)
-        theta_data = [theta1_data, theta2_data, theta3_data, theta4_data]
+        theta5_data = pr.save_part_log(degrees(theta[4]), theta5_data)
+        theta_data = [theta1_data, theta2_data, theta3_data,
+                      theta4_data, theta5_data]
 
         dot_theta1_data = pr.save_part_log(dot_theta[0], dot_theta1_data)
         dot_theta2_data = pr.save_part_log(dot_theta[1], dot_theta2_data)
         dot_theta3_data = pr.save_part_log(dot_theta[2], dot_theta3_data)
         dot_theta4_data = pr.save_part_log(dot_theta[3], dot_theta4_data)
+        dot_theta5_data = pr.save_part_log(dot_theta[4], dot_theta5_data)
         dot_theta_data = [dot_theta1_data, dot_theta2_data,
-                          dot_theta3_data, dot_theta4_data]
+                          dot_theta3_data, dot_theta4_data,
+                          dot_theta5_data]
 
         ddot_theta1_data = pr.save_part_log(ddot_theta[0], ddot_theta1_data)
         ddot_theta2_data = pr.save_part_log(ddot_theta[1], ddot_theta2_data)
         ddot_theta3_data = pr.save_part_log(ddot_theta[2], ddot_theta3_data)
         ddot_theta4_data = pr.save_part_log(ddot_theta[3], ddot_theta4_data)
+        ddot_theta5_data = pr.save_part_log(ddot_theta[4], ddot_theta5_data)
         ddot_theta_data = [ddot_theta1_data, ddot_theta2_data,
-                           ddot_theta3_data, ddot_theta4_data]
+                           ddot_theta3_data, ddot_theta4_data,
+                           ddot_theta5_data]
 
         # Position data
         x_data = pr.save_part_log(position[0], x_data)
@@ -337,12 +389,14 @@ if __name__ == '__main__':
         # otherdata
         f1_data = pr.save_part_log(actf[0], f1_data)
         f2_data = pr.save_part_log(actf[1], f2_data)
-        f4_data = pr.save_part_log(actf[2], f4_data)
-        f_data = [f1_data, f2_data, f4_data]
+        f3_data = pr.save_part_log(actf[2], f3_data)
+        f5_data = pr.save_part_log(actf[3], f5_data)
+        f_data = [f1_data, f2_data, f3_data, f5_data]
 
         fl.write(link_data)
         fm.write(motor_data)
         fp.write(position_data)
+
 
     # Print result
     title_name = ['Link angle', 'Motor angle',
@@ -365,12 +419,12 @@ if __name__ == '__main__':
     plt.subplot(321)
     pr.print_graph(title_name[0], time_log, q_data,
                    label_name[0], xlabel_name[0], ylabel_name[0],
-                   num_plot_data=4)
+                   num_plot_data=5)
 
     plt.subplot(322)
     pr.print_graph(title_name[1], time_log, theta_data,
                    label_name[1], xlabel_name[0], ylabel_name[0],
-                   num_plot_data=4)
+                   num_plot_data=5)
 
     plt.subplot(323)
     pr.print_graph(title_name[2], time_log, p_data,
@@ -408,7 +462,7 @@ if __name__ == '__main__':
 
     pr.print_graph(title_name[6], time_log, f_data,
                    label_name[5], xlabel_name[0], ylabel_name[2],
-                   num_plot_data=3)
+                   num_plot_data=4)
 
     plt.savefig('result.png')
     plt.show()
@@ -420,3 +474,4 @@ if __name__ == '__main__':
 
     pr.move_excel_data()
     print('Tasks are completed!')
+
