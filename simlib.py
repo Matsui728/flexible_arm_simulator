@@ -544,10 +544,10 @@ def new_PID_position_control_4dof(gain, dot_theta, Xd, X, Jt, sum_X,
 
     tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1])
     tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1])
-    tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + ki[1] * (Jt[2][0] * sum_X[0] + Jt[2][1] * sum_X[1])
+    tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + ki[2] * (Jt[2][0] * sum_X[0] + Jt[2][1] * sum_X[1])
 
     tau4 = 0
-    tau5 = kp[4] * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1])) + ki[3] * (Jt[4][0] * sum_X[0] + Jt[4][1] * sum_X[1])
+    tau5 = kp[4] * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1])) + ki[4] * (Jt[4][0] * sum_X[0] + Jt[4][1] * sum_X[1])
 
     f1, f2, f3, f5 = 0, 0, 0, 0
 

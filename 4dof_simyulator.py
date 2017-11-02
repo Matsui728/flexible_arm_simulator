@@ -51,14 +51,14 @@ if __name__ == '__main__':
     # ゲイン調整
     control_gain1 = sl.imput_gain(3.0, 0.00, 0.000)
     control_gain2 = sl.imput_gain(3.0, 0.00, 0.000)
-    control_gain3 = sl.imput_gain(3.0, 0.0, 0.0)
+    control_gain3 = sl.imput_gain(3.0, 0.00, 0.000)
     control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
     control_gain5 = sl.imput_gain(3.0, 0.00, 0.000)
     gain = [control_gain1, control_gain2, control_gain3,
             control_gain4, control_gain5]
 
     # Link data
-    q = [radians(150), radians(-70), radians(-20),
+    q = [radians(176.60345307481958), radians(-173.2069061496392), radians(86.60345307481961),
          radians(135), radians(-90)]  # 初期角度
     dot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
     ddot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     dot_qd = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Motor data
-    theta = [radians(150), radians(-70), radians(-20),
+    theta = [radians(176.60345307481958), radians(-173.2069061496392), radians(86.60345307481961),
              radians(135), radians(-90)]    # 初期角度
     dot_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
     ddot_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -100,9 +100,9 @@ if __name__ == '__main__':
     dot_thetad = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Input force
-    f1_data, f2_data, f3_data, f5_data = [], [], []
-    Fconstant = 0.1
-    force_gain = 0.001
+    f1_data, f2_data, f3_data, f5_data = [], [], [], []
+    Fconstant = 0.0
+    force_gain = 0.000
     actf = []
 
     # Data list
@@ -161,8 +161,8 @@ if __name__ == '__main__':
     time_log = []
 
     # Deseired Position
-    xd = -0.2
-    yd = 0.3
+    xd = 0.1
+    yd = 0.4
     Xd = [xd, yd]
     x_data = []
     xd_data = []
