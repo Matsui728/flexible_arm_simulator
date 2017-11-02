@@ -8,14 +8,14 @@ Created on Thu Nov  2 15:05:52 2017
 import numpy as np
 import matplotlib.pyplot as plt
 from math import degrees, radians, sin, cos
-from math import atan2, pow, sqrt, degrees
+from math import atan2, pow, sqrt
 
 def cul_inverse_kinematics_3dof(x, y, l, theta):
 
     a = y - l[2] * sin(theta)      # θはベース-手先間の角度
     b = x - l[2] * cos(theta)
-    c = (pow((y - l[2] * sin(theta)), 2) + pow(x - l[2] * cos(theta), 2) + pow(l[0], 2) - pow(l[1], 2))/ 2 * l[0]
-    d = (pow((y - l[2] * sin(theta)), 2) + pow(x - l[2] * cos(theta), 2) - pow(l[0], 2) + pow(l[1], 2))/ 2 * l[1]
+    c = (pow((y - l[2] * sin(theta)), 2) + pow(x - l[2] * cos(theta), 2) + pow(l[0], 2) - pow(l[1], 2))/ (2 * l[0])
+    d = (pow((y - l[2] * sin(theta)), 2) + pow(x - l[2] * cos(theta), 2) - pow(l[0], 2) + pow(l[1], 2))/ (2 * l[1])
 
     theta1 = degrees(atan2(a, b) - atan2(-sqrt(pow(a, 2) + pow(b, 2) - pow(c, 2)), c))
 
@@ -29,11 +29,12 @@ def cul_inverse_kinematics_3dof(x, y, l, theta):
 
 
 def cul_inverse_kinematics_2dof(x, y, l):
-    a = (pow(x, 2) + pow(y, 2) + pow(l[0], 2) - pow(l[1], 2)) / 2 * l[0]
-    b = (pow(x, 2) + pow(y, 2) - pow(l[0], 2) + pow(l[1], 2)) / 2 * l[1]
+    a = (pow(x, 2) + pow(y, 2) + pow(l[0], 2) - pow(l[1], 2)) / (2 * l[0])
+    b = (pow(x, 2) + pow(y, 2) - pow(l[0], 2) + pow(l[1], 2)) / (2 * l[1])
 
     c = x*x + y*y - a*a
     d = x*x + y*y - b*b
+
     theta1 = atan2(y, x) + atan2(sqrt(c), a)
     theta2 = -atan2((sqrt(c)), a) - atan2(sqrt(d), b)
 

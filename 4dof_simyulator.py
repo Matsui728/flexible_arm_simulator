@@ -49,17 +49,17 @@ if __name__ == '__main__':
     arm2_Inertia = [Inertia[3], Inertia[4]]
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(3.0, 0.00, 0.000)
-    control_gain2 = sl.imput_gain(3.0, 0.00, 0.000)
-    control_gain3 = sl.imput_gain(3.0, 0.00, 0.000)
+    control_gain1 = sl.imput_gain(30.0, 0.00, 0.000)
+    control_gain2 = sl.imput_gain(30.0, 0.00, 0.000)
+    control_gain3 = sl.imput_gain(30.0, 0.00, 0.000)
     control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain5 = sl.imput_gain(3.0, 0.00, 0.000)
+    control_gain5 = sl.imput_gain(30.0, 0.00, 0.000)
     gain = [control_gain1, control_gain2, control_gain3,
             control_gain4, control_gain5]
 
     # Link data
-    q = [radians(176.60345307481958), radians(-173.2069061496392), radians(86.60345307481961),
-         radians(135), radians(-90)]  # 初期角度
+    q = [radians(123.55730976192072), radians(-67.11461952384143), radians(33.557309761920706),
+         radians(121.00271913387397), radians(-62.00543826774795)]  # 初期角度
     dot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
     ddot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
     sum_q = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -79,8 +79,8 @@ if __name__ == '__main__':
     dot_qd = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Motor data
-    theta = [radians(176.60345307481958), radians(-173.2069061496392), radians(86.60345307481961),
-             radians(135), radians(-90)]    # 初期角度
+    theta = [radians(123.55730976192072), radians(-67.11461952384143), radians(33.557309761920706),
+             radians(121.00271913387397), radians(-62.00543826774795)]    # 初期角度
     dot_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
     ddot_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
     sum_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
     # Input force
     f1_data, f2_data, f3_data, f5_data = [], [], [], []
-    Fconstant = 0.0
+    Fconstant = 1.0
     force_gain = 0.000
     actf = []
 
@@ -156,13 +156,13 @@ if __name__ == '__main__':
     k = [k1, k2, k3, k4, k5]
 
     # Time Parametas
-    simulate_time = 20.0     # シミュレート時間
+    simulate_time = 10.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
     # Deseired Position
-    xd = 0.1
-    yd = 0.4
+    xd = 0.2
+    yd = 0.3
     Xd = [xd, yd]
     x_data = []
     xd_data = []
@@ -190,9 +190,9 @@ if __name__ == '__main__':
     fc.write('[Parameters]\n')
     fc.write('Xd = {}, Yd ={}\n'. format(Xd[0], Xd[1])
              + 'k1 = [{},{},{},{},{}],'. format(k[0][0], k[1][0],
-                                                k[2][0], k[3][0],  k[4][0])
+                                                k[2][0], k[3][0], k[4][0])
              + 'k2 = [{},{},{},{},{}]\n'. format(k[0][1], k[1][1],
-                                                 k[2][1], k[3][1],  k[4][1]))
+                                                 k[2][1], k[3][1], k[4][1]))
 
     for i in range(len(gain)):
         fc.write('Gain{} = [kp={}, kv={}, ki={}]\n'. format(i, gain[i][0],
@@ -256,7 +256,7 @@ if __name__ == '__main__':
         # ヤコビとヤコビ転置
         J1 = sl.jacobi_serial3dof(link1, arm1_q)
         J2 = sl.jacobi_serial2dof(link2, arm2_q)
-        J = [J1, J2]
+        J = sl.jacobi(J1, J2)
         Jt = sl.transpose_matrix(J)
 
         # 手先位置導出
@@ -284,7 +284,7 @@ if __name__ == '__main__':
                                     Jt, P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1)
 
         # 関節角加速度の計算
-        ddot_q = sl.angular_acceleration_3dof(invPhi, f, A)
+        ddot_q = sl.angular_acceleration_4dof(invPhi, f, A)
 
         # 拘束項
         lam = sl.binding_force_4dof(invPhi, f, A)
@@ -323,7 +323,7 @@ if __name__ == '__main__':
         dot_q2_data = pr.save_part_log(dot_q[1], dot_q2_data)
         dot_q3_data = pr.save_part_log(dot_q[2], dot_q3_data)
         dot_q4_data = pr.save_part_log(dot_q[3], dot_q4_data)
-        dot_q5_data = pr.save_part_log(degrees(dot_q[4]), dot_q5_data)
+        dot_q5_data = pr.save_part_log(dot_q[4], dot_q5_data)
         dot_q_data = [dot_q1_data, dot_q2_data, dot_q3_data,
                       dot_q4_data, dot_q5_data]
 
@@ -331,7 +331,7 @@ if __name__ == '__main__':
         ddot_q2_data = pr.save_part_log(ddot_q[1], ddot_q2_data)
         ddot_q3_data = pr.save_part_log(ddot_q[2], ddot_q3_data)
         ddot_q4_data = pr.save_part_log(ddot_q[3], ddot_q4_data)
-        ddot_q5_data = pr.save_part_log(degrees(ddot_q[4]), ddot_q5_data)
+        ddot_q5_data = pr.save_part_log(ddot_q[4], ddot_q5_data)
         ddot_q_data = [ddot_q1_data, ddot_q2_data, ddot_q3_data,
                        ddot_q4_data, ddot_q5_data]
 
@@ -403,12 +403,12 @@ if __name__ == '__main__':
                   'Time-Position', 'Restraining force', 'Position',
                   'Non lineaar characteristics', 'Acting force']
 
-    label_name1 = ['Link1', 'Link2', 'Link3', 'Link4']
-    label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4']
+    label_name1 = ['Link1', 'Link2', 'Link3', 'Link4', 'Link5']
+    label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4', 'Motor5']
     label_name3 = ['X position', 'Y position', 'Xd position', 'Yd position']
     label_name4 = ['λx', 'λy']
     label_name5 = ["k1 = {}, k2 = {}". format(k1[0], k1[1])]
-    label_name6 = ['f1', 'f2', 'f4']
+    label_name6 = ['f1', 'f2', 'f3', 'f5']
     label_name = [label_name1, label_name2, label_name3, label_name4,
                   label_name5, label_name6]
 
