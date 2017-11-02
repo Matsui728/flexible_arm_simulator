@@ -528,6 +528,52 @@ def positioncontorol_modified(gain, dot_theta, Xd, X, Jt, sum_X, F,
     return Tau, f
 
 
+def new_PID_position_control_4dof(gain, dot_theta, Xd, X, Jt, sum_X,
+                                  constantF=0, eps=0.1):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1])
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1])
+    tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + ki[2] * (Jt[2][0] * sum_X[0] + Jt[2][1] * sum_X[1])
+
+    tau4 = 0
+    tau5 = kp[4] * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1])) + ki[4] * (Jt[4][0] * sum_X[0] + Jt[4][1] * sum_X[1])
+
+    f1, f2, f3, f5 = 0, 0, 0, 0
+
+    if norm < eps:
+        er_vector = unit_vector(X[0], X[1])
+        Jdt = desired_jacobi_4dof(Jt, er_vector)
+
+        f1 = constantF * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
+        f2 = constantF * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
+        f3 = constantF * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1]))
+        f5 = -constantF * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1]))
+
+        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1*Jdt[0]
+        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2*Jdt[1]
+        tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + ki[1] * (Jt[2][0] * sum_X[0] + Jt[2][1] * sum_X[1]) + f3*Jdt[2]
+
+        tau4 = 0
+        tau5 = f5*Jdt[4]
+
+    Tau = [tau1, tau2, tau3, tau4, tau5]
+
+    f = [f1, f2, f3, f5]
+
+    return Tau, f
+
+
 def normal_vector(Xd, Yd):
     z = pow(Xd, 2) + pow(Yd, 2)
     Absolute_value = sqrt(z)
@@ -573,6 +619,17 @@ def desired_jacobi(Jt, normal_vector):
     Jdt4 = (Jt[3][0] * normal_vector[0] + Jt[3][1] * normal_vector[1])
 
     Jdt = [Jdt1, Jdt2, Jdt3, Jdt4]
+
+    return Jdt
+
+
+def desired_jacobi_4dof(Jt, normal_vector):
+    Jdt1 = (Jt[0][0] * normal_vector[0] + Jt[0][1] * normal_vector[1])
+    Jdt2 = (Jt[1][0] * normal_vector[0] + Jt[1][1] * normal_vector[1])
+    Jdt3 = (Jt[2][0] * normal_vector[0] + Jt[2][1] * normal_vector[1])
+    Jdt4 = (Jt[3][0] * normal_vector[0] + Jt[3][1] * normal_vector[1])
+    Jdt5 = (Jt[4][0] * normal_vector[0] + Jt[4][1] * normal_vector[1])
+    Jdt = [Jdt1, Jdt2, Jdt3, Jdt4, Jdt5]
 
     return Jdt
 
@@ -624,6 +681,17 @@ def angular_acceleration_3dof(inv_phi, f, A):
     return ddot_q
 
 
+def angular_acceleration_4dof(inv_phi, f, A):
+    ddot_q1 = inv_phi[0][0] * f[0] + inv_phi[0][1] * f[1] + inv_phi[0][2] * f[2] + inv_phi[0][3] * f[3] + inv_phi[0][4] * f[4] + inv_phi[0][5] * A[0] + inv_phi[0][6] * A[1]
+    ddot_q2 = inv_phi[1][0] * f[0] + inv_phi[1][1] * f[1] + inv_phi[1][2] * f[2] + inv_phi[1][3] * f[3] + inv_phi[1][4] * f[4] + inv_phi[1][5] * A[0] + inv_phi[1][6] * A[1]
+    ddot_q3 = inv_phi[2][0] * f[0] + inv_phi[2][1] * f[1] + inv_phi[2][2] * f[2] + inv_phi[2][3] * f[3] + inv_phi[2][4] * f[4] + inv_phi[2][5] * A[0] + inv_phi[2][6] * A[1]
+    ddot_q4 = inv_phi[3][0] * f[0] + inv_phi[3][1] * f[1] + inv_phi[3][2] * f[2] + inv_phi[3][3] * f[3] + inv_phi[3][4] * f[4] + inv_phi[3][5] * A[0] + inv_phi[3][6] * A[1]
+    ddot_q5 = inv_phi[4][0] * f[0] + inv_phi[4][1] * f[1] + inv_phi[4][2] * f[2] + inv_phi[4][3] * f[3] + inv_phi[4][4] * f[4] + inv_phi[4][5] * A[0] + inv_phi[4][6] * A[1]
+
+    ddot_q = [ddot_q1, ddot_q2, ddot_q3, ddot_q4, ddot_q5]
+
+    return ddot_q
+
 def motor_angular_acceleration(Mm, tau, B, dot_theta, F):
     ddot_theta_data = []
     for i in range(len(tau)):
@@ -657,6 +725,69 @@ def moment_matrix_3dof(m, l, lg, I, q):
     return moment_matrix
 
 
+def moment_matrix_serial3dof(m, l, lg, I, q):
+    M1 = m[0] * lg[0] * lg[0] + I[0] + m[1] * (l[0] * l[0] + lg[1] * lg[1] + 2.0*l[0] * lg[1] * cos(q[1])) + I[1] + m[2] * (l[0]*l[0] + l[1]*l[1] + lg[2]*lg[2] + 2*l[0]*l[1]*cos(q[1]) + 2*l[1]*lg[2]*cos(q[2]) + 2*l[0]*lg[2]*cos(q[1]+q[2])) + I[2]
+    M2 = m[1] * (lg[1] * lg[1] + l[0] * lg[1] * cos(q[1])) + I[1]+ m[2]*(l[1] * l[1] + lg[2] * lg[2] + l[0] * l[1] * cos(q[1]) + 2*l[1]*lg[2]*cos(q[2]) + lg[0]*lg[2]*cos(q[1]+q[2])) + I[2]
+    M3 = m[2]*(lg[2]*lg[2] + l[1]*lg[2]*cos(q[2]) + l[0]*lg[2]*cos(q[1]+q[2])) + I[2]
+
+    M4 = m[1] * (lg[1] * lg[1] + l[0] * lg[1] * cos(q[1])) + I[1] + m[2]*(l[1]*l[1] + lg[2]*lg[2] + l[0]*l[1]*cos(q[1]) + 2*l[1]*lg[2]*cos(q[2]) + l[0]*lg[2]*cos(q[1] + q[2])) + I[2]
+    M5 = m[1] * lg[1] * lg[1] + I[1] + m[2]*(l[1]*l[1] + lg[2]*lg[2]+2*l[1]*lg[2]*cos(q[2])) + I[2]
+    M6 = m[2]*(lg[2]*lg[2] + l[1]*lg[2]*cos(q[2])) + I[2]
+
+    M7 = m[2]*(lg[2]*lg[2] + l[1]*lg[2]*cos(q[2]) + l[0]*lg[2]*cos(q[1]+q[2])) + I[2]
+    M8 = m[2]*(lg[2]*lg[2] + lg[1]*lg[2]*cos(q[2])) + I[2]
+    M9 = m[2]*lg[2]*lg[2] + I[2]
+    moment_matrix = [M1, M2, M3, M4, M5, M6, M7, M8, M9]
+
+    return moment_matrix
+
+
+def coriolis_item_serial3dof(m, l, lg, q, dot_q):
+    h1 = -m[1]*l[0]*lg[1]*sin(q[1])*(dot_q[1]*dot_q[1] + 2.0*dot_q[0]*dot_q[1]) + m[2]*(-l[0] * l[1]  * dot_q[1] * sin(q[1]) * (2 * dot_q[0] + dot_q[1]) - l[1] * lg[2] * dot_q[2] * sin(q[2]) * (2 * dot_q[0] + 2 * dot_q[1] + dot_q[2]) - l[0] * lg[2] * (dot_q[1] + dot_q[2]) * sin(q[1] + q[2])  * (2 * dot_q[0] + dot_q[1] + dot_q[2]))
+    h2 = m[1]*l[0]*lg[1]*sin(q[1])*dot_q[0]*dot_q[0] + m[2]*(l[0] * l[1]  * dot_q[0]  * dot_q[0] *  sin(q[1] - l[1] * lg[2] * sin(q[2]) * dot_q[2] * (2*dot_q[0]+2*dot_q[1]+dot_q[2]) + l[0] * lg[2] * dot_q[0]  * dot_q[0] * sin(q[1]+q[2])))
+    h3 = m[2] * (l[1]*lg[2]*(dot_q[0]+dot_q[1])*(dot_q[0]+dot_q[1])*sin(q[2]) + l[0]*lg[2]*dot_q[0]*dot_q[0]*sin(q[1]+q[2]))
+
+    H = [h1, h2, h3]
+
+    return H
+
+def moment_matrix_serial2dof(m, l, lg, I, q):
+    M1 = m[0] * lg[0] * lg[0] + I[0] + m[1] * (l[0] * l[0] + lg[1] * lg[1] + 2.0 * l[0] * lg[1] * cos(q[1])) + I[1]
+    M2 = m[1] * (lg[1] * lg[1] + l[0] * lg[1] * cos(q[1])) + I[1]
+    M3 = m[1] * (lg[1] * lg[1] + l[0] * lg[1] * cos(q[1])) + I[1]
+    M4 = m[1] * lg[1] * lg[1] + I[1]
+
+    M = [M1, M2, M3, M4]
+
+    return M
+
+def coriolis_item_serial2dof(m, l, lg, q, dot_q):
+    h1 = -m[1] * l[0] * lg[1] * (2 * dot_q[0] + dot_q[1]) * dot_q[1] * sin(q[1])
+    h2 = m[1] * l[0] * lg[1] * dot_q[0] * dot_q[0] * sin(q[1])
+
+    H = [h1, h2]
+
+    return H
+
+
+def define_E(l, q):
+    E1 = -l[0] * sin(q[0]) - (l[1] * sin(q[0] + q[1]) + l[2] * sin(q[0] + q[1] + q[2]))
+    E2 = -(l[1] * sin(q[0] + q[1]) + l[2] * sin(q[0] + q[1] + q[2]))
+    E3 = -l[2] * sin(q[0] + q[1] + q[2])
+    E4 = l[3] * sin(q[3]) + l[4] * sin(q[3] + q[4])
+    E5 = l[4] * sin(q[3] + q[4])
+
+    E6 = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1]) + l[2] * cos(q[0] + q[1] + q[2])
+    E7 = l[1] * cos(q[0] + q[1]) + l[2] * cos(q[0] + q[1] + q[2])
+    E8 = l[2] * cos(q[0] + q[1] + q[2])
+    E9 = -l[3] * cos(q[3]) -l[4] * cos(q[3] + q[4])
+    E10 = -l[4] * cos(q[3] + q[4])
+
+    E = [E1, E2, E3, E4, E5, E6, E7, E8, E9, E10]
+
+    return E
+
+
 def twice_differential_values(l, q):
     E1 = -l[0] * sin(q[0]) - l[1] * sin(q[0] + q[1])
     E2 = -l[1] * sin(q[0] + q[1])
@@ -671,6 +802,25 @@ def twice_differential_values(l, q):
     E = [E1, E2, E3, E4, E5, E6, E7, E8]
 
     return E
+
+def phi_matrix_4dof(M1, M2, E):
+    phi1, phi2, phi3, phi4, phi5, phi6, phi7 = M1[0], M1[1], M1[2], 0, 0, E[0], E[4]
+    phi8, phi9, phi10, phi11, phi12, phi13, phi14 = M1[3], M1[4], M1[5], 0, 0, E[1], E[5]
+    phi15, phi16, phi17, phi18, phi19, phi20, phi21 = M1[6], M1[7], M1[8], 0, 0, E[2], E[6]
+    phi22, phi23, phi24, phi25, phi26, phi27, phi28 = 0, 0, 0, M2[0], M2[1], E[3], E[7]
+    phi29, phi30, phi31, phi32, phi33, phi34, phi35 = 0, 0, 0, M2[2], M2[3], E[8], E[9]
+    phi36, phi37, phi38, phi39, phi40, phi41, phi42 = E[0], E[1], E[2], E[3], E[4], 0, 0
+    phi43, phi44, phi45, phi46, phi47, phi48, phi49 = E[5], E[6], E[7], E[8], E[9], 0, 0
+
+    Phi = [[phi1, phi2, phi3, phi4, phi5, phi6, phi7],
+           [phi8, phi9, phi10, phi11, phi12, phi13, phi14],
+           [phi15, phi16, phi17, phi18, phi19, phi20, phi21],
+           [phi22, phi23, phi24, phi25, phi26, phi27, phi28],
+           [phi29, phi30, phi31, phi32, phi33, phi34, phi35],
+           [phi36, phi37, phi38, phi39, phi40, phi41, phi42],
+           [phi43, phi44, phi45, phi46, phi47, phi48, phi49]]
+
+    return Phi
 
 
 def phi_matrix(M, E):
@@ -773,6 +923,17 @@ def restraint_part(l, q, dot_q, d):
     return dot_P, P, dot_Q, Q
 
 
+
+def restraint_item(l, q, dot_q):
+    dot_P = -l[0] * sin(q[0]) * dot_q[0] - l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) - l[2] * sin(q[0]+q[1]+q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) + l[3] * sin(q[3]) * dot_q[3] + l[4] * sin(q[3] + q[4]) * (dot_q[3] + dot_q[4])
+    P = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1]) + l[2] * cos(q[0]+q[1]+q[2]) - l[3] * cos(q[3])-l[4]*cos(q[3] + q[4])
+
+    dot_Q = l[0] * cos(q[0]) * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) + l[2] * cos(q[0]+q[1] + q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) - l[3] * cos(q[3]) * dot_q[3] - l[4] * cos(q[3] + q[4]) * (dot_q[3] + dot_q[4])
+    Q =     P = l[0] * sin(q[0]) + l[1] * sin(q[0] + q[1]) + l[2] * sin(q[0]+q[1]+q[2]) - l[3] * sin(q[3]) - l[4]*sin(q[3] + q[4])
+
+    return dot_P, P, dot_Q, Q
+
+
 def input_forces(l, q, dot_q, h, D, K, Jt,
                  P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1):
     f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0] - D * dot_q[0]
@@ -789,6 +950,23 @@ def input_forces(l, q, dot_q, h, D, K, Jt,
     return f, A
 
 
+def input_forces_4dof(l, q, dot_q, h, D, K, Jt,
+                      P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1):
+    f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0][0] - D * dot_q[0]
+    f2 = K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[0][1] - D * dot_q[1]
+    f3 = K[2] + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[0][2] - D * dot_q[2]
+    f4 = K[3] + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[1][0] - D * dot_q[3]
+    f5 = K[4] + (Jt[4][0] * Fx + Jt[4][1] * Fy) - h[1][1] - D * dot_q[4]
+
+    A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) + l[2] * cos(q[0] + q[1] + q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) - l[3] * cos(q[3]) * dot_q[3] * dot_q[3] - l[4] * cos(q[3] + q[4]) * (dot_q[3] + dot_q[4]) * (dot_q[3] + dot_q[4])
+    A2 = -2 * s * dot_Q - s * s * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) + l[2] * sin(q[0] + q[1] + q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) - l[3] * sin(q[3]) * dot_q[3] * dot_q[3] - l[4] * sin(q[3] + q[4]) * (dot_q[3] + dot_q[4]) * (dot_q[3] + dot_q[4])
+
+    f = [f1, f2, f3, f4, f5]
+    A = [A1, A2]
+
+    return f, A
+
+
 def out_forces(x, max_force=10, bias=1):
     y = bias*x
     if y > max_force:
@@ -799,6 +977,15 @@ def out_forces(x, max_force=10, bias=1):
         F = y
 
     return F
+
+
+def binding_force_4dof(inv_phi, f, A):
+    lambda_x = inv_phi[5][0] * f[0] + inv_phi[5][1] * f[1] + inv_phi[5][2] * f[2] + inv_phi[5][3] * f[3] + inv_phi[5][4] * f[4] + inv_phi[5][5] * A[0] + inv_phi[5][6] * A[1]
+    lambda_y = inv_phi[6][0] * f[0] + inv_phi[6][1] * f[1] + inv_phi[6][2] * f[2] + inv_phi[6][3] * f[3] + inv_phi[6][4] * f[4] + inv_phi[6][5] * A[0] + inv_phi[6][6] * A[1]
+
+    lam = [lambda_x, lambda_y]
+
+    return lam
 
 
 def binding_force(inv_phi, f, A):
@@ -842,6 +1029,37 @@ def jacobi_matrix(l, q):
     J8 = l[3] * cos(q[2] + q[3])
 
     J = [[J1, J2, J3, J4], [J5, J6, J7, J8]]
+
+    return J
+
+
+def jacobi_serial3dof(l, q):
+    J1 = -l[0] * sin(q[0]) -l[1] * sin(q[0]+q[1]) - l[2] * sin(q[0] + q[1] + q[2])
+    J2 = -l[1] * sin(q[0] + q[1]) - l[2] * sin(q[0] + q[1] + q[2])
+    J3 = -l[2] * sin(q[0] + q[1] + q[2])
+
+    J4 = l[0] * cos(q[0]) + l[1] * cos(q[0]+q[1]) + l[2] * cos(q[0] + q[1] + q[2])
+    J5 = l[1] * cos(q[0]+q[1]) + l[2] * cos(q[0] + q[1] + q[2])
+    J6 = l[2] * cos(q[0] + q[1] + q[2])
+
+    J = [[J1, J2, J3], [J4, J5, J6]]
+
+    return J
+
+
+def jacobi_serial2dof(l, q):
+    J1 = -l[0] * sin(q[0]) - l[1] * sin(q[0] + q[1])
+    J2 = -l[1] * sin(q[0] + q[1])
+    J3 = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1])
+    J4 = l[1] * cos(q[0] + q[1])
+
+    J = [[J1, J2], [J3, J4]]
+
+    return J
+
+def jacobi(J1, J2):
+    J = [[J1[0][0], J1[0][1], J1[0][2], J2[0][0], J2[0][1]],
+         [J1[1][0], J1[1][1], J1[1][2], J2[1][0], J2[1][1]]]
 
     return J
 
