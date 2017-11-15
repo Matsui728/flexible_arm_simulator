@@ -13,6 +13,8 @@ import simlib as sl
 from tqdm import tqdm
 import configparser
 
+import inverse_kinematics as ik
+
 # データログ保存パス
 cp = configparser.ConfigParser()
 cp.read('config')
@@ -57,9 +59,14 @@ if __name__ == '__main__':
     gain = [control_gain1, control_gain2, control_gain3,
             control_gain4, control_gain5]
 
+    # 初期姿勢
+    x0 = 0.0
+    y0 = 0.5
+    Theta = radians(90)
+
+    q, theta = ik.make_intial_angle(x0, y0, link1, link2, Theta)  # 初期角度
+
     # Link data
-    q = [radians(123.55730976192072), radians(-67.11461952384143), radians(33.557309761920706),
-         radians(121.00271913387397), radians(-62.00543826774795)]  # 初期角度
     dot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
     ddot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
     sum_q = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -79,8 +86,6 @@ if __name__ == '__main__':
     dot_qd = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Motor data
-    theta = [radians(123.55730976192072), radians(-67.11461952384143), radians(33.557309761920706),
-             radians(121.00271913387397), radians(-62.00543826774795)]    # 初期角度
     dot_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
     ddot_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
     sum_theta = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -101,8 +106,8 @@ if __name__ == '__main__':
 
     # Input force
     f1_data, f2_data, f3_data, f5_data = [], [], [], []
-    Fconstant = 1.0
-    force_gain = 0.000
+    Fconstant = 0.0
+    force_gain = 0.0
     actf = []
 
     # Data list
@@ -150,18 +155,18 @@ if __name__ == '__main__':
     k1 = sl.non_linear_parameta(3, 1)
     k2 = sl.non_linear_parameta(3, 1)
     k3 = sl.non_linear_parameta(3, 1)
-    k4 = sl.non_linear_parameta(0.0, 0.0)
+    k4 = sl.non_linear_parameta(0, 0.0)
     k5 = sl.non_linear_parameta(3, 1)
 
     k = [k1, k2, k3, k4, k5]
 
     # Time Parametas
-    simulate_time = 10.0     # シミュレート時間
+    simulate_time = 20.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
     # Deseired Position
-    xd = 0.2
+    xd = 0.3
     yd = 0.3
     Xd = [xd, yd]
     x_data = []
@@ -412,8 +417,8 @@ if __name__ == '__main__':
     label_name = [label_name1, label_name2, label_name3, label_name4,
                   label_name5, label_name6]
 
-    xlabel_name = ['Time[s]', 'X[m]', 'θ-q']
-    ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K']
+    xlabel_name = ['Time[s]', 'X[m]', 'θ-q[rad]']
+    ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K[Nm]']
 
     plt.figure(figsize=(11, 12))
     plt.subplot(321)
@@ -443,10 +448,10 @@ if __name__ == '__main__':
     plt.ylim(-0.4, 0.8)
 
     plt.subplot(326)
-#
+
 #    dif_data = [-3.14]
 #    K_part = []
-#
+
 #    for i in range(628):
 #        d = -3.14 + i*0.01
 #        dif_data.append(d)
@@ -455,10 +460,10 @@ if __name__ == '__main__':
 #        kpart2 = kpart1*dif_data[i]
 #        K_part.append(kpart2)
 #        K_data = [K_part]
-#
+
 #    pr.print_graph(title_name[5], dif_data, K_data, label_name[4],
 #                   xlabel_name[2], ylabel_name[4], num_plot_data=1)
-#
+
 
     pr.print_graph(title_name[6], time_log, f_data,
                    label_name[5], xlabel_name[0], ylabel_name[2],
