@@ -43,11 +43,26 @@ def cul_inverse_kinematics_2dof(x, y, l):
     return thetas
 
 
+def make_intial_angle(x, y, l1, l2, theta0):
+    q1 = cul_inverse_kinematics_3dof(x, y, l1, theta0)
+    q2 = cul_inverse_kinematics_2dof(x, y, l2)
+
+    theta1 = cul_inverse_kinematics_3dof(x, y, l1, theta0)
+    theta2 = cul_inverse_kinematics_2dof(x, y, l2)
+
+    q = [radians(q1[0]), radians(q1[1]), radians(q1[2]),
+         radians(q2[0]), radians(q2[1])]
+    theta = [radians(theta1[0]), radians(theta1[1]), radians(theta1[2]),
+             radians(theta2[0]), radians(theta2[1])]
+
+    return q, theta
+
+
 if __name__ == '__main__':
-    theta = radians(90)
+    theta = radians(135)
     l1 = [0.3, 0.3, 0.1]
     l2 = [0.35, 0.35]
-    x = 0.0
+    x = 0
     y = 0.6
 
     thetas1 = cul_inverse_kinematics_3dof(x, y, l1, theta)
