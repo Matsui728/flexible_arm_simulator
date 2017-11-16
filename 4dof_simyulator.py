@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     # Prametas of motor
     Mm = 34.7*pow(10, -7)       # モータの慣性モーメント
-    B = 0.004  # モータの粘性
+    B = 0.001  # モータの粘性
 
     # 慣性モーメント
     Inertia = []
@@ -151,6 +151,8 @@ if __name__ == '__main__':
      ddot_theta_data,
      sum_theta_data, dot_thetad_data) = [], [], [], [], [], []
 
+    circle_data = []
+
     # Non linear character Parametas
     k1 = sl.non_linear_parameta(3, 1)
     k2 = sl.non_linear_parameta(3, 1)
@@ -174,6 +176,8 @@ if __name__ == '__main__':
     yd_data = []
     y_data = []
     c_data = []
+    circlex_data = []
+    circley_data = []
     sum_x = 0.0
     sum_y = 0.0
     sum_x_data = []
@@ -276,7 +280,8 @@ if __name__ == '__main__':
 
         Tau, actf = sl.new_PID_position_control_4dof(gain, dot_theta, Xd,
                                                      position, Jt, sum_X,
-                                                     Fconstant, eps)
+                                                     force_gain, eps,
+                                                     Fconstant)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
@@ -298,6 +303,8 @@ if __name__ == '__main__':
         ddot_theta = sl.motor_angular_acceleration(Mm, Tau, B,
                                                    dot_theta, K)
 
+        C = sl.make_circle(eps, time, xd, yd)
+
         # エクセル用log_data保存
         link_data = pr.save_angle_excel_log(time, q, qd, dot_q, ddot_q)
         motor_data = pr.save_angle_excel_log(time, theta, thetad,
@@ -305,6 +312,10 @@ if __name__ == '__main__':
 
         position_data = pr.save_position_log(time, position[0], position[1],
                                              xd, yd, lam[0], lam[1])
+
+        # Save Circle data
+        circlex_data = pr. save_part_log(C[0], circlex_data)
+        circley_data = pr. save_part_log(C[1], circley_data)
 
         # Save time log
         time_log = pr.save_part_log(time, time_log)
@@ -381,7 +392,8 @@ if __name__ == '__main__':
         y_data = pr.save_part_log(position[1], y_data)
         yd_data = pr.save_part_log(yd, yd_data)
         p_data = [x_data, y_data, xd_data, yd_data]
-        xy_data = [y_data]
+        xyx_data = [x_data, xd_data, circlex_data]
+        xyy_data = [y_data, yd_data, circley_data]
 
         sum_x_data = pr.save_part_log(sum_X[0], sum_x_data)
         sum_y_data = pr.save_part_log(sum_X[1], sum_y_data)
@@ -414,8 +426,9 @@ if __name__ == '__main__':
     label_name4 = ['λx', 'λy']
     label_name5 = ["k1 = {}, k2 = {}". format(k1[0], k1[1])]
     label_name6 = ['f1', 'f2', 'f3', 'f5']
+    label_name7 = ['Trajectory', 'Desired Position', 'Working circle']
     label_name = [label_name1, label_name2, label_name3, label_name4,
-                  label_name5, label_name6]
+                  label_name5, label_name6, label_name7]
 
     xlabel_name = ['Time[s]', 'X[m]', 'θ-q[rad]']
     ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K[Nm]']
@@ -442,10 +455,10 @@ if __name__ == '__main__':
                    num_plot_data=2)
 
     plt.subplot(325)
-    pr.print_graph(title_name[4], p_data[0], xy_data, 'Position',
-                   xlabel_name[1], ylabel_name[3], num_plot_data=1)
-    plt.xlim(-0.8, 0.8)
-    plt.ylim(-0.4, 0.8)
+    pr.print_graph_beta(title_name[4], xyx_data, xyy_data, label_name[6],
+                        xlabel_name[1], ylabel_name[3], num_plot_data=3)
+    plt.xlim(0.0, 0.6)
+    plt.ylim(0.0, 0.6)
 
     plt.subplot(326)
 

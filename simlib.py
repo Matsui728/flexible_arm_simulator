@@ -529,7 +529,7 @@ def positioncontorol_modified(gain, dot_theta, Xd, X, Jt, sum_X, F,
 
 
 def new_PID_position_control_4dof(gain, dot_theta, Xd, X, Jt, sum_X,
-                                  constantF=0, eps=0.1, f0=1.0):
+                                  constantF=0, eps=0.1, f0=0.0):
     kp = []
     kv = []
     ki = []
@@ -542,12 +542,12 @@ def new_PID_position_control_4dof(gain, dot_theta, Xd, X, Jt, sum_X,
 
     norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
 
-    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1])
-    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1])
-    tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + ki[2] * (Jt[2][0] * sum_X[0] + Jt[2][1] * sum_X[1])
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
+    tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1]))
 
     tau4 = 0
-    tau5 = kp[4] * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1])) + ki[4] * (Jt[4][0] * sum_X[0] + Jt[4][1] * sum_X[1])
+    tau5 = kp[4] * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1]))
 
     f1, f2, f3, f5 = 0, 0, 0, 0
 
@@ -560,12 +560,47 @@ def new_PID_position_control_4dof(gain, dot_theta, Xd, X, Jt, sum_X,
         f3 = constantF * norm + f0
         f5 = -constantF * norm - f0
 
-        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + ki[0] * (Jt[0][0] * sum_X[0] + Jt[0][1] * sum_X[1]) + f1*Jdt[0]
-        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + ki[1] * (Jt[1][0] * sum_X[0] + Jt[1][1] * sum_X[1]) + f2*Jdt[1]
-        tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + ki[1] * (Jt[2][0] * sum_X[0] + Jt[2][1] * sum_X[1]) + f3*Jdt[2]
+        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + f1*Jdt[0]
+        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + f2*Jdt[1]
+        tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + f3*Jdt[2]
 
         tau4 = 0
         tau5 = f5*Jdt[4]
+
+    Tau = [tau1, tau2, tau3, tau4, tau5]
+
+    f = [f1, f2, f3, f5]
+
+    return Tau, f
+
+def new_PID_position_control_4dof_try(gain, dot_theta, Xd, X, Jt, sum_X,
+                                      constantF=0, eps=0.1, f0=0.0):
+    kp = []
+    kv = []
+    ki = []
+
+    for i in range(len(gain)):
+        Kp, Kv, Ki = gain[i]
+        kp.append(Kp)
+        kv.append(Kv)
+        ki.append(Ki)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+
+    er_vector = unit_vector(X[0], X[1])
+    Jdt = desired_jacobi_4dof(Jt, er_vector)
+
+    f1 = constantF * norm + f0
+    f2 = constantF * norm + f0
+    f3 = constantF * norm + f0
+    f5 = -constantF * norm - f0
+
+    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + f1*Jdt[0]
+    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + f2*Jdt[1]
+    tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + f3*Jdt[2]
+
+    tau4 = 0
+    tau5 = f5*Jdt[4]
 
     Tau = [tau1, tau2, tau3, tau4, tau5]
 
@@ -1087,11 +1122,20 @@ def jacobi_serial2dof(l, q):
 
     return J
 
+
 def jacobi(J1, J2):
     J = [[J1[0][0], J1[0][1], J1[0][2], J2[0][0], J2[0][1]],
          [J1[1][0], J1[1][1], J1[1][2], J2[1][0], J2[1][1]]]
 
     return J
+
+
+def make_circle(r,t, xd, yd):
+    cy = r*sin(t) + yd
+    cx = r*cos(t) + xd
+
+    C = [cx, cy]
+    return C
 
 
 def print_non_lineaar_Characteristics():
