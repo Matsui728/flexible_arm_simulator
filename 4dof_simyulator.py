@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     # Input force
     f1_data, f2_data, f3_data, f5_data = [], [], [], []
-    Fconstant = 0.0
+    Fconstant = 1.0
     force_gain = 0.0
     actf = []
 
@@ -157,13 +157,13 @@ if __name__ == '__main__':
     k1 = sl.non_linear_parameta(3, 1)
     k2 = sl.non_linear_parameta(3, 1)
     k3 = sl.non_linear_parameta(3, 1)
-    k4 = sl.non_linear_parameta(0, 0.0)
+    k4 = sl.non_linear_parameta(3, 1)
     k5 = sl.non_linear_parameta(3, 1)
 
     k = [k1, k2, k3, k4, k5]
 
     # Time Parametas
-    simulate_time = 20.0     # シミュレート時間
+    simulate_time = 60.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
@@ -278,10 +278,9 @@ if __name__ == '__main__':
         sum_y = sl.sum_position_difference(sum_y, yd, Y, sampling_time)
         sum_X = [sum_x, sum_y]
 
-        Tau, actf = sl.new_PID_position_control_4dof(gain, dot_theta, Xd,
-                                                     position, Jt, sum_X,
-                                                     force_gain, eps,
-                                                     Fconstant)
+        Tau, actf = sl.PIDcontrol_eforce_base(gain, theta, dot_theta,
+                                              Xd, position, Jt, k,
+                                              force_gain, eps, Fconstant)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
