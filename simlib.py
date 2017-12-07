@@ -608,8 +608,29 @@ def new_PID_position_control_4dof_try(gain, dot_theta, Xd, X, Jt, sum_X,
 
     return Tau, f
 
-def PIDcontrol_eforce_base(gain, theta, dot_theta, Xd, X, Jt, K,
+def PIDcontrol_eforce_base(gain, theta, dot_theta, Xd, X, Jt, K, qd,
                            constantF=0, eps=0.1, f0=0.0):
+
+    er_vector = normal_vector(X[0], X[1])
+    Jdt = desired_jacobi_4dof(Jt, er_vector)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+
+    f1 = constantF * norm + f0
+    f2 = constantF * norm + f0
+    f3 = constantF * norm + f0
+    f4 = -constantF * norm - f0
+    f5 = -constantF * norm - f0
+
+    tauf1 = f1 * Jdt[0]
+    tauf2 = f2 * Jdt[1]
+    tauf3 = f3 * Jdt[2]
+    tauf4 = f4 * Jdt[3]
+    tauf5 = f5 * Jdt[4]
+
+    tauf = [tauf1, tauf2, tauf3, tauf4, tauf5]
+
+    Thetad = deseired_theta(qd, tauf, K)
 
     kp = []
     kv = []
@@ -621,58 +642,36 @@ def PIDcontrol_eforce_base(gain, theta, dot_theta, Xd, X, Jt, K,
         kv.append(Kv)
         ki.append(Ki)
 
-    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+    kps = 1.0
+    kvs = 0.004
 
-    tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
-    tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
-    tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1]))
 
-    tau4 = 0
-    tau5 = kp[4] * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1]))
 
-    f1, f2, f3, f5 = 0, 0, 0, 0
-
-    if norm < eps:
-        er_vector = normal_vector(X[0], X[1])
-        Jdt = desired_jacobi_4dof(Jt, er_vector)
-
-        f1 = constantF * norm + f0
-        f2 = constantF * norm + f0
-        f3 = constantF * norm + f0
-        f4 = -constantF * norm - f0
-        f5 = -constantF * norm - f0
-
-        tauf1 = f1 * Jdt[0]
-        tauf2 = f2 * Jdt[1]
-        tauf3 = f3 * Jdt[2]
-        tauf4 = f4 * Jdt[3]
-        tauf5 = f5 * Jdt[4]
-        tauf = [tauf1, tauf2, tauf3, tauf4, tauf5]
-
-        qd1 = Jt[0][0] * Xd[0] + Jt[0][1] * Xd[1]
-        qd2 = Jt[1][0] * Xd[0] + Jt[1][1] * Xd[1]
-        qd3 = Jt[2][0] * Xd[0] + Jt[2][1] * Xd[1]
-        qd4 = Jt[3][0] * Xd[0] + Jt[3][1] * Xd[1]
-        qd5 = Jt[4][0] * Xd[0] + Jt[4][1] * Xd[1]
-
-        qd = [qd1, qd2, qd3, qd4, qd5]
-
-        Thetad = deseired_theta(qd, tauf, K)
-
-        kp = 0.05
-        kv = 0.004
-        tau1 = kp * (Thetad[0]-theta[0]) - kv * dot_theta[0]
-        tau2 = kp * (Thetad[1]-theta[1]) - kv * dot_theta[1]
-        tau3 = kp * (Thetad[2]-theta[2]) - kv * dot_theta[2]
+    if norm > eps:
+        tau1 = kp[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
+        tau2 = kp[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
+        tau3 = kp[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1]))
 
         tau4 = 0
-        tau5 = kp * (Thetad[4]-theta[4]) - kv * dot_theta[4]
+        tau5 = kp[4] * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1]))
+
+        f1, f2, f3, f5 = 0, 0, 0, 0
+
+
+    else:
+        tau1 = kps * (Thetad[0]-theta[0]) - kvs * dot_theta[0]
+        tau2 = kps * (Thetad[1]-theta[1]) - kvs * dot_theta[1]
+        tau3 = kps * (Thetad[2]-theta[2]) - kvs * dot_theta[2]
+
+        tau4 = 0
+        tau5 = kps * (Thetad[4]-theta[4]) - kvs * dot_theta[4]
+
 
     Tau = [tau1, tau2, tau3, tau4, tau5]
 
     f = [f1, f2, f3, f5]
 
-    return Tau, f
+    return Tau, f, Thetad
 
 
 def new_PID_position_control_4dof_PID(gain, dot_theta, Xd, X, Jt, sum_X,
@@ -732,12 +731,17 @@ def deseired_theta(qd, tauf, K):
     Thetad = []
 
     for i in range(len(tauf)):
-        a1 = 9 * tauf[i] * K[i][1] + sqrt(3) * sqrt(4 * pow(K[i][0], 3) * pow(K[i][1], 3) + 27 * pow(tauf[i], 2) * pow(K[i][1], 4))
-        A1 = pow(a1, 1/3)
-        A2 = pow(2, 1/3)*pow(3, 2/3) * K[i][1]
+        if tauf[i]==0:
+            thetad = qd[i]
+            Thetad.append(thetad)
 
-        thetad = (pow(2/3, 1/3) * K[i][0] / A1) + (A1 / A2) + qd[i]
-        Thetad.append(thetad)
+        else:
+            a1 = 9 * tauf[i] * K[i][1] + sqrt(3) * sqrt(4 * pow(K[i][0], 3) * pow(K[i][1], 3) + 27 * pow(tauf[i], 2) * pow(K[i][1], 4))
+            A1 = pow(a1, 1/3)
+            A2 = pow(2, 1/3)*pow(3, 2/3) * K[i][1]
+
+            thetad = (pow(2/3, 1/3) * K[i][0] / A1) + (A1 / A2) + qd[i]
+            Thetad.append(thetad)
 
     return Thetad
 

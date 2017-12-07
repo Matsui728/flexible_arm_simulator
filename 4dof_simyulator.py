@@ -54,7 +54,7 @@ if __name__ == '__main__':
     control_gain1 = sl.imput_gain(30.0, 0.00, 0.000)
     control_gain2 = sl.imput_gain(30.0, 0.00, 0.000)
     control_gain3 = sl.imput_gain(30.0, 0.00, 0.000)
-    control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain4 = sl.imput_gain(30.0, 0.0, 0.0)
     control_gain5 = sl.imput_gain(30.0, 0.00, 0.000)
     gain = [control_gain1, control_gain2, control_gain3,
             control_gain4, control_gain5]
@@ -81,8 +81,6 @@ if __name__ == '__main__':
     arm2_ddotq = [ddot_q[3], ddot_q[4]]
 
     # Desired Parametas
-    qd = [radians(0), radians(0), radians(0),
-          radians(0), radians(0)]  # 目標角度
     dot_qd = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Motor data
@@ -100,13 +98,12 @@ if __name__ == '__main__':
     arm2_ddottheta = [ddot_theta[3], ddot_theta[4]]
 
     # Desired Parametas
-    thetad = [radians(0), radians(0), radians(0),
-              radians(0), radians(0)]    # 目標角度
+    thetad = []    # 目標角度
     dot_thetad = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     # Input force
     f1_data, f2_data, f3_data, f5_data = [], [], [], []
-    Fconstant = 1.0
+    Fconstant = 0.1
     force_gain = 0.0
     actf = []
 
@@ -154,22 +151,24 @@ if __name__ == '__main__':
     circle_data = []
 
     # Non linear character Parametas
-    k1 = sl.non_linear_parameta(3, 1)
-    k2 = sl.non_linear_parameta(3, 1)
-    k3 = sl.non_linear_parameta(3, 1)
-    k4 = sl.non_linear_parameta(3, 1)
-    k5 = sl.non_linear_parameta(3, 1)
+    k1 = sl.non_linear_parameta(0.3, 0.8)
+    k2 = sl.non_linear_parameta(0.3, 0.8)
+    k3 = sl.non_linear_parameta(0.3, 0.8)
+    k4 = sl.non_linear_parameta(0.3, 0.8)
+    k5 = sl.non_linear_parameta(0.3, 0.8)
 
     k = [k1, k2, k3, k4, k5]
 
     # Time Parametas
-    simulate_time = 60.0     # シミュレート時間
+    simulate_time = 20.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
     # Deseired Position
     xd = 0.3
     yd = 0.3
+    thetaqq = radians(45)
+    qd, thetaqd = ik.make_intial_angle(xd, yd, link1, link2, thetaqq)
     Xd = [xd, yd]
     x_data = []
     xd_data = []
@@ -278,8 +277,8 @@ if __name__ == '__main__':
         sum_y = sl.sum_position_difference(sum_y, yd, Y, sampling_time)
         sum_X = [sum_x, sum_y]
 
-        Tau, actf = sl.PIDcontrol_eforce_base(gain, theta, dot_theta,
-                                              Xd, position, Jt, k,
+        Tau, actf, thetad = sl.PIDcontrol_eforce_base(gain, theta, dot_theta,
+                                              Xd, position, Jt, k, qd,
                                               force_gain, eps, Fconstant)
 
         # 偏差と非線形弾性特性値の計算
@@ -417,7 +416,8 @@ if __name__ == '__main__':
     # Print result
     title_name = ['Link angle', 'Motor angle',
                   'Time-Position', 'Restraining force', 'Position',
-                  'Non lineaar characteristics', 'Acting force']
+                  'Non lineaar characteristics', 'Acting force',
+                  'θd data', 'qd data']
 
     label_name1 = ['Link1', 'Link2', 'Link3', 'Link4', 'Link5']
     label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4', 'Motor5']
@@ -426,40 +426,44 @@ if __name__ == '__main__':
     label_name5 = ["k1 = {}, k2 = {}". format(k1[0], k1[1])]
     label_name6 = ['f1', 'f2', 'f3', 'f5']
     label_name7 = ['Trajectory', 'Desired Position', 'Working circle']
+    label_name8 = ['θd1','θd2','θd3','θd4','θd5']
+    label_name9 = ['qd1','qd2','qd3','qd4','qd5']
+
     label_name = [label_name1, label_name2, label_name3, label_name4,
-                  label_name5, label_name6, label_name7]
+                  label_name5, label_name6, label_name7, label_name8,
+                  label_name9]
 
     xlabel_name = ['Time[s]', 'X[m]', 'θ-q[rad]']
     ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K[Nm]']
 
     plt.figure(figsize=(11, 12))
-    plt.subplot(321)
+    plt.subplot(421)
     pr.print_graph(title_name[0], time_log, q_data,
                    label_name[0], xlabel_name[0], ylabel_name[0],
                    num_plot_data=5)
 
-    plt.subplot(322)
+    plt.subplot(422)
     pr.print_graph(title_name[1], time_log, theta_data,
                    label_name[1], xlabel_name[0], ylabel_name[0],
                    num_plot_data=5)
 
-    plt.subplot(323)
+    plt.subplot(423)
     pr.print_graph(title_name[2], time_log, p_data,
                    label_name[2], xlabel_name[0], ylabel_name[1],
                    num_plot_data=4)
 
-    plt.subplot(324)
+    plt.subplot(424)
     pr.print_graph(title_name[3], time_log, lam_data,
                    label_name[3], xlabel_name[0], ylabel_name[2],
                    num_plot_data=2)
 
-    plt.subplot(325)
+    plt.subplot(425)
     pr.print_graph_beta(title_name[4], xyx_data, xyy_data, label_name[6],
                         xlabel_name[1], ylabel_name[3], num_plot_data=3)
     plt.xlim(0.0, 0.6)
     plt.ylim(0.0, 0.6)
 
-    plt.subplot(326)
+    plt.subplot(426)
 
 #    dif_data = [-3.14]
 #    K_part = []
@@ -480,6 +484,18 @@ if __name__ == '__main__':
     pr.print_graph(title_name[6], time_log, f_data,
                    label_name[5], xlabel_name[0], ylabel_name[2],
                    num_plot_data=4)
+
+    plt.subplot(427)
+    pr.print_graph(title_name[7], time_log, thetad_data,
+                   label_name[7], xlabel_name[0], ylabel_name[0],
+                   num_plot_data=5)
+
+    plt.subplot(428)
+    pr.print_graph(title_name[8], time_log, qd_data,
+                   label_name[8], xlabel_name[0], ylabel_name[0],
+                   num_plot_data=5)
+
+
 
     plt.savefig('result.png')
     plt.show()
