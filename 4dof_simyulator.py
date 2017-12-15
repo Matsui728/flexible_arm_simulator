@@ -23,7 +23,7 @@ root_dir = cp.get('dataset_dir', 'dir_path')
 
 if __name__ == '__main__':
     # Parameters
-    m = [1.0, 1.0, 0.5, 1.0, 1.0]  # 質量
+    m = [0.3, 0.3, 0.1, 0.3, 0.3]  # 質量
     arm1_m = [m[0], m[1], m[2]]
     arm2_m = [m[3], m[4]]
 
@@ -51,13 +51,21 @@ if __name__ == '__main__':
     arm2_Inertia = [Inertia[3], Inertia[4]]
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(30.0, 0.00, 0.000)
-    control_gain2 = sl.imput_gain(30.0, 0.00, 0.000)
-    control_gain3 = sl.imput_gain(30.0, 0.00, 0.000)
-    control_gain4 = sl.imput_gain(30.0, 0.0, 0.0)
-    control_gain5 = sl.imput_gain(30.0, 0.00, 0.000)
-    gain = [control_gain1, control_gain2, control_gain3,
+    control_gain1 = sl.imput_gain(50.0, 0.00, 0.000)
+    control_gain2 = sl.imput_gain(50.0, 0.00, 0.000)
+    control_gain3 = sl.imput_gain(50.0, 0.00, 0.000)
+    control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain5 = sl.imput_gain(50.0, 0.00, 0.000)
+    gain1 = [control_gain1, control_gain2, control_gain3,
             control_gain4, control_gain5]
+
+    control_gain1 = sl.imput_gain(220.0, 0.00, 0.000)
+    control_gain2 = sl.imput_gain(220.0, 0.00, 0.000)
+    control_gain3 = sl.imput_gain(220.0, 0.00, 0.000)
+    control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain5 = sl.imput_gain(220.0, 0.00, 0.000)
+    gain2 = [control_gain1, control_gain2, control_gain3,
+             control_gain4, control_gain5]
 
     # 初期姿勢
     x0 = 0.0
@@ -103,7 +111,7 @@ if __name__ == '__main__':
 
     # Input force
     f1_data, f2_data, f3_data, f5_data = [], [], [], []
-    Fconstant = 0.1
+    Fconstant = 100
     force_gain = 0.0
     actf = []
 
@@ -151,22 +159,22 @@ if __name__ == '__main__':
     circle_data = []
 
     # Non linear character Parametas
-    k1 = sl.non_linear_parameta(0.3, 0.8)
-    k2 = sl.non_linear_parameta(0.3, 0.8)
-    k3 = sl.non_linear_parameta(0.3, 0.8)
-    k4 = sl.non_linear_parameta(0.3, 0.8)
-    k5 = sl.non_linear_parameta(0.3, 0.8)
+    k1 = sl.non_linear_parameta(1.85, 0.001)
+    k2 = sl.non_linear_parameta(1.85, 0.001)
+    k3 = sl.non_linear_parameta(1.85, 0.001)
+    k4 = sl.non_linear_parameta(1.85, 0.001)
+    k5 = sl.non_linear_parameta(1.85, 0.001)
 
     k = [k1, k2, k3, k4, k5]
 
     # Time Parametas
-    simulate_time = 20.0     # シミュレート時間
+    simulate_time = 7.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
     # Deseired Position
-    xd = 0.3
-    yd = 0.3
+    xd = 0.4
+    yd = 0.4
     thetaqq = radians(45)
     qd, thetaqd = ik.make_intial_angle(xd, yd, link1, link2, thetaqq)
     Xd = [xd, yd]
@@ -174,6 +182,8 @@ if __name__ == '__main__':
     xd_data = []
     yd_data = []
     y_data = []
+    x2_data = []
+    y2_data = []
     c_data = []
     circlex_data = []
     circley_data = []
@@ -202,10 +212,10 @@ if __name__ == '__main__':
              + 'k2 = [{},{},{},{},{}]\n'. format(k[0][1], k[1][1],
                                                  k[2][1], k[3][1], k[4][1]))
 
-    for i in range(len(gain)):
-        fc.write('Gain{} = [kp={}, kv={}, ki={}]\n'. format(i, gain[i][0],
-                                                            gain[i][1],
-                                                            gain[i][2]))
+ #   for i in range(len(gain)):
+ #       fc.write('Gain{} = [kp={}, kv={}, ki={}]\n'. format(i, gain[i][0],
+ #                                                           gain[i][1],
+ #                                                            gain[i][2]))
 
     fc.write('simulate time = {}[s]'. format(simulate_time))
     fc.write('sampling time = {}[s]\n'. format(sampling_time))
@@ -272,14 +282,18 @@ if __name__ == '__main__':
         Y = ll[0] * sin(q[0]) + ll[1] * sin(q[0] + q[1]) + ll[2] * sin(q[0] + q[1] + q[2])
         position = [X, Y]
 
+        X2 = ll[3]*cos(q[3]) + ll[4]*cos(q[3]+q[4])
+        Y2 = ll[3]*sin(q[3]) + ll[4]*sin(q[3]+q[4])
+        position2 = [X2, Y2]
+
         # 偏差積分値の計算
         sum_x = sl.sum_position_difference(sum_x, xd, X, sampling_time)
         sum_y = sl.sum_position_difference(sum_y, yd, Y, sampling_time)
         sum_X = [sum_x, sum_y]
 
-        Tau, actf, thetad = sl.PIDcontrol_eforce_base(gain, theta, dot_theta,
-                                              Xd, position, Jt, k, qd,
-                                              force_gain, eps, Fconstant)
+        Tau, actf, thetad = sl.PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta,
+                                                      Xd, position, Jt, k, qd,
+                                                      force_gain, eps, Fconstant)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
@@ -389,9 +403,14 @@ if __name__ == '__main__':
         xd_data = pr.save_part_log(xd, xd_data)
         y_data = pr.save_part_log(position[1], y_data)
         yd_data = pr.save_part_log(yd, yd_data)
-        p_data = [x_data, y_data, xd_data, yd_data]
+
+        x2_data = pr.save_part_log(position2[0], x2_data)
+        y2_data = pr.save_part_log(position2[1], y2_data)
+        p_data = [x_data, y_data, x2_data, y2_data, xd_data, yd_data]
+
         xyx_data = [x_data, xd_data, circlex_data]
         xyy_data = [y_data, yd_data, circley_data]
+
 
         sum_x_data = pr.save_part_log(sum_X[0], sum_x_data)
         sum_y_data = pr.save_part_log(sum_X[1], sum_y_data)
@@ -421,7 +440,9 @@ if __name__ == '__main__':
 
     label_name1 = ['Link1', 'Link2', 'Link3', 'Link4', 'Link5']
     label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4', 'Motor5']
-    label_name3 = ['X position', 'Y position', 'Xd position', 'Yd position']
+    label_name3 = ['X1 position', 'Y1 position',
+                   'X2 position', 'Y2 position',
+                   'Xd position', 'Yd position']
     label_name4 = ['λx', 'λy']
     label_name5 = ["k1 = {}, k2 = {}". format(k1[0], k1[1])]
     label_name6 = ['f1', 'f2', 'f3', 'f5']
@@ -450,7 +471,7 @@ if __name__ == '__main__':
     plt.subplot(423)
     pr.print_graph(title_name[2], time_log, p_data,
                    label_name[2], xlabel_name[0], ylabel_name[1],
-                   num_plot_data=4)
+                   num_plot_data=6)
 
     plt.subplot(424)
     pr.print_graph(title_name[3], time_log, lam_data,
