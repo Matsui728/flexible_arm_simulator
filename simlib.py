@@ -608,6 +608,7 @@ def new_PID_position_control_4dof_try(gain, dot_theta, Xd, X, Jt, sum_X,
 
     return Tau, f
 
+
 def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
                            constantF=0, eps=0.1, f0=0.0):
 
@@ -679,6 +680,83 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
     f = [f1, f2, f3, f5]
 
     return Tau, f, Thetad
+
+
+
+def PIDcontrol_polar(gain1, gain2, theta, dot_theta, Xd, X, Jt, Jt_polar,
+                     K, qd, Rd, R, Phid, Phi, Phi1, Phi2,
+                     constantF=0, eps=0.1, f0=0.0):
+
+    er_vector = normal_vector(X[0], X[1])
+    Jdt = desired_jacobi_4dof(Jt, er_vector)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+
+    f1 = constantF * norm + f0
+    f2 = constantF * norm + f0
+    f3 = constantF * norm + f0
+    f4 = -constantF * norm - f0
+    f5 = -constantF * norm - f0
+
+    tauf1 = f1 * Jt_polar[0][0]
+    tauf2 = f2 * Jt_polar[1][0]
+    tauf3 = f3 * Jt_polar[2][0]
+    tauf4 = f4 * Jt_polar[3][0]
+    tauf5 = f5 * Jt_polar[4][0]
+
+    tauf = [tauf1, tauf2, tauf3, tauf4, tauf5]
+    Thetad = deseired_theta(qd, tauf, K)
+
+
+    kp1 = []
+    kv1 = []
+    ki1 = []
+
+    kp2 = []
+    kv2 = []
+    ki2 = []
+
+    for i in range(len(gain1)):
+        Kp, Kv, Ki = gain1[i]
+        kp1.append(Kp)
+        kv1.append(Kv)
+        ki1.append(Ki)
+
+    for i in range(len(gain2)):
+        Kp, Kv, Ki = gain2[i]
+        kp2.append(Kp)
+        kv2.append(Kv)
+        ki2.append(Ki)
+
+    kps = 0.01
+    kvs = 0.001
+
+    if norm > eps:
+        tau1 = kp1[0] * (Jt_polar[0][0] * (Rd - R) + Jt_polar[0][1] * (Phid - Phi))
+        tau2 = kp1[1] * (Jt_polar[1][0] * (Rd - R) + Jt_polar[1][1] * (Phid - Phi))
+        tau3 = kp1[2] * (Jt_polar[2][0] * (Rd - R) + Jt_polar[2][1] * (Phid - Phi))
+
+        tau4 = 0
+        tau5 = kp1[4] * (Jt_polar[4][0] * (Rd - R) + Jt_polar[4][1] * (Phid - Phi))
+
+        f1, f2, f3, f5 = 0, 0, 0, 0
+
+    else:
+
+        tau1 = kp2[0] * (Jt_polar[0][0] * (Rd - R) + Jt_polar[0][1] * (Phid - Phi)) + kps * (Thetad[0]-theta[0]) - kvs * dot_theta[0]
+        tau2 = kp2[1] * (Jt_polar[1][0] * (Rd - R) + Jt_polar[1][1] * (Phid - Phi)) + kps * (Thetad[1]-theta[1]) - kvs * dot_theta[1]
+        tau3 = kp2[2] * (Jt_polar[2][0] * (Rd - R) + Jt_polar[2][1] * (Phid - Phi)) + kps * (Thetad[2]-theta[2]) - kvs * dot_theta[2]
+
+        tau4 = 0
+        tau5 = kps * (Thetad[4]-theta[4]) - kvs * dot_theta[4]
+
+    Tau = [tau1, tau2, tau3, tau4, tau5]
+
+    f = [f1, f2, f3, f5]
+
+    return Tau, f, Thetad
+
+
 
 
 def new_PID_position_control_4dof_PID(gain, dot_theta, Xd, X, Jt, sum_X,
@@ -1101,7 +1179,7 @@ def input_forces(l, q, dot_q, h, D, K, Jt,
 
 
 def input_forces_4dof(l, q, dot_q, h, D, K, Jt,
-                      P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1):
+                      P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=10):
     f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0][0] - D * dot_q[0]
     f2 = K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[0][1] - D * dot_q[1]
     f3 = K[2] + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[0][2] - D * dot_q[2]
@@ -1165,6 +1243,34 @@ def non_linear_parameta(k1, k2):
     K = [k1, k2]
 
     return K
+
+
+def jacobi_polar_coordinates_3dof(l, q):
+    a = pow(l[0], 2) + pow(l[1], 2) + pow(l[2], 2) + 2*l[0]*l[1]*cos(q[1]) + 2*l[1]*l[2]*cos(q[2]) + 2*l[0]*l[2]*cos(q[1]+q[2])
+    A = sqrt(a)
+
+    J1 = 0
+    J2 = (-l[0] * (l[1]*sin(q[1]) + l[2]*sin(q[1]+q[2]))) / A
+    J3 = (-l[2] * (l[1]*sin(q[2]) + l[0]*sin(q[1]+q[2]))) / A
+
+    J4 = 1
+    J5 = 1
+    J6 = 1
+
+    J = [[J1, J2, J3], [J4, J5, J6]]
+
+    return J
+
+
+def jacobi_polar_coordinates_2dof(l, q):
+    J1 = 0
+    J2 = -(l[0]*l[1]*sin(q[1])) / sqrt(pow(l[0], 2) + pow(l[1], 2) + 2*l[0]*l[1]*cos(q[1]))
+    J3 = 1
+    J4 = 1
+
+    J = [[J1, J2], [J3, J4]]
+
+    return J
 
 
 def jacobi_matrix(l, q):

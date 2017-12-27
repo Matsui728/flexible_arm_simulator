@@ -7,7 +7,7 @@ Created on Mon Oct 30 15:49:51 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import degrees, radians, sin, cos
+from math import degrees, radians, sin, cos, atan2, sqrt
 import print_result as pr
 import simlib as sl
 from tqdm import tqdm
@@ -51,11 +51,11 @@ if __name__ == '__main__':
     arm2_Inertia = [Inertia[3], Inertia[4]]
 
     # ゲイン調整
-    control_gain1 = sl.imput_gain(50.0, 0.00, 0.000)
-    control_gain2 = sl.imput_gain(50.0, 0.00, 0.000)
-    control_gain3 = sl.imput_gain(50.0, 0.00, 0.000)
+    control_gain1 = sl.imput_gain(100.0, 0.00, 0.000)
+    control_gain2 = sl.imput_gain(100.0, 0.00, 0.000)
+    control_gain3 = sl.imput_gain(100.0, 0.00, 0.000)
     control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain5 = sl.imput_gain(50.0, 0.00, 0.000)
+    control_gain5 = sl.imput_gain(100.0, 0.00, 0.000)
     gain1 = [control_gain1, control_gain2, control_gain3,
             control_gain4, control_gain5]
 
@@ -177,6 +177,8 @@ if __name__ == '__main__':
     yd = 0.4
     thetaqq = radians(45)
     qd, thetaqd = ik.make_intial_angle(xd, yd, link1, link2, thetaqq)
+    Rd = sqrt(pow(xd, 2) + pow(yd, 2))
+    phid = radians(atan2(yd, xd))
     Xd = [xd, yd]
     x_data = []
     xd_data = []
@@ -277,6 +279,14 @@ if __name__ == '__main__':
         J = sl.jacobi(J1, J2)
         Jt = sl.transpose_matrix(J)
 
+        # 極座標系ヤコビ行列
+        J1_polar = sl.jacobi_polar_coordinates_3dof(link1, arm1_q)
+        J2_polar = sl.jacobi_polar_coordinates_2dof(link2, arm2_q)
+        J_polar = sl.jacobi(J1_polar, J2_polar)
+        Jt_polar = sl.transpose_matrix(J_polar)
+
+
+
         # 手先位置導出
         X = ll[0] * cos(q[0]) + ll[1] * cos(q[0] + q[1]) + ll[2] * cos(q[0] + q[1] + q[2])
         Y = ll[0] * sin(q[0]) + ll[1] * sin(q[0] + q[1]) + ll[2] * sin(q[0] + q[1] + q[2])
@@ -286,14 +296,19 @@ if __name__ == '__main__':
         Y2 = ll[3]*sin(q[3]) + ll[4]*sin(q[3]+q[4])
         position2 = [X2, Y2]
 
+        R = sqrt(pow(X, 2) + pow(Y, 2))
+        phi = radians(atan2(Y, X))
+        phi1 = radians(q[0] + q[1] + q[2])
+        phi2 = radians(q[3] + q[4])
+
         # 偏差積分値の計算
         sum_x = sl.sum_position_difference(sum_x, xd, X, sampling_time)
         sum_y = sl.sum_position_difference(sum_y, yd, Y, sampling_time)
         sum_X = [sum_x, sum_y]
 
-        Tau, actf, thetad = sl.PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta,
-                                                      Xd, position, Jt, k, qd,
-                                                      force_gain, eps, Fconstant)
+        Tau, actf, thetad = sl.PIDcontrol_polar(gain1, gain2, theta, dot_theta, Xd, position, Jt, Jt_polar,
+                                                k, qd, Rd, R, phid, phi, phi1, phi2,
+                                                force_gain, eps, Fconstant)
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
