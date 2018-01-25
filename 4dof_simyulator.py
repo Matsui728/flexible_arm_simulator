@@ -36,12 +36,12 @@ if __name__ == '__main__':
     arm1_lg = [lg[0], lg[1], lg[2]]
     arm2_lg = [lg[3], lg[4]]
 
-    D = 3  # リンク粘性
+    D = 0.4  # リンク粘性
     g = 9.8  # 重力加速度
 
     # Prametas of motor
     Mm = 34.7*pow(10, -7)       # モータの慣性モーメント
-    B = 1  # モータの粘性
+    B = 0.00001  # モータの粘性
 
     # 慣性モーメント
     Inertia = []
@@ -164,8 +164,8 @@ if __name__ == '__main__':
 
     circle_data = []
 
-    k11 = 10
-    k21 = 500
+    k11 = 40
+    k21 = 800
 
     # Non linear character Parametas
     k1 = sl.non_linear_parameta(k11, k21)
@@ -334,8 +334,8 @@ if __name__ == '__main__':
         Fx = sl.out_force(0.5, time)
 
         f, A, Tauff = sl.input_forces_4dof(ll, q, dot_q, H, D, K,
-                                           Jt, P, Q, dot_P, dot_Q, 10,
-                                           0, s=1)
+                                           Jt, P, Q, dot_P, dot_Q, 0,
+                                           0, s=5)
 
         # 関節角加速度の計算
         ddot_q = sl.angular_acceleration_4dof(invPhi, f, A)

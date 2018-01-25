@@ -653,7 +653,7 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
         kv2.append(Kv)
         ki2.append(Ki)
 
-    kps = 1
+    kps = 0.1
     kvs = 0.001
 
     if norm > eps:
@@ -728,8 +728,8 @@ def PIDcontrol_polar(gain1, gain2, theta, dot_theta, Xd, X, Jt, Jt_polar,
         kv2.append(Kv)
         ki2.append(Ki)
 
-    kps = 150
-    kvs = 0.001
+    kps = 0.1
+    kvs = 0.0001
 
     if norm > eps:
         tau1 = kp1[0] * (Jt_polar[0][0] * (Rd - R) + Jt_polar[0][1] * (Phid - Phi))
