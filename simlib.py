@@ -612,7 +612,7 @@ def new_PID_position_control_4dof_try(gain, dot_theta, Xd, X, Jt, sum_X,
 def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
                            constantF=0, eps=0.1, f0=0.0):
 
-    er_vector = normal_vector(X[0], X[1])
+    er_vector = normal_vector(Xd[0], Xd[1])
     Jdt = desired_jacobi_4dof(Jt, er_vector)
 
     norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
@@ -626,7 +626,7 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
     tauf1 = f1 * Jdt[0]
     tauf2 = f2 * Jdt[1]
     tauf3 = f3 * Jdt[2]
-    tauf4 = f4 * Jdt[3]
+    tauf4 = 0
     tauf5 = f5 * Jdt[4]
 
     tauf = [tauf1, tauf2, tauf3, tauf4, tauf5]
@@ -653,7 +653,7 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
         kv2.append(Kv)
         ki2.append(Ki)
 
-    kps = 0.01
+    kps = 1
     kvs = 0.001
 
     if norm > eps:
@@ -695,7 +695,7 @@ def PIDcontrol_polar(gain1, gain2, theta, dot_theta, Xd, X, Jt, Jt_polar,
     f1 = constantF * norm + f0
     f2 = constantF * norm + f0
     f3 = constantF * norm + f0
-    f4 = -constantF * norm - f0
+    f4 = 0
     f5 = -constantF * norm - f0
 
     tauf1 = f1 * Jt_polar[0][0]
@@ -728,7 +728,7 @@ def PIDcontrol_polar(gain1, gain2, theta, dot_theta, Xd, X, Jt, Jt_polar,
         kv2.append(Kv)
         ki2.append(Ki)
 
-    kps = 0.01
+    kps = 150
     kvs = 0.001
 
     if norm > eps:
@@ -757,6 +757,82 @@ def PIDcontrol_polar(gain1, gain2, theta, dot_theta, Xd, X, Jt, Jt_polar,
     return Tau, f, Thetad
 
 
+def PIDcontrol_polar1(gain1, gain2, theta, dot_theta, Xd, X, Jt, Jt_polar,
+                     K, qd, Rd, R, Phid, Phi, Phi1, Phi2, sum_polar,
+                     constantF=0, eps=0.1, f0=0.0):
+
+    er_vector = normal_vector(X[0], X[1])
+    Jdt = desired_jacobi_4dof(Jt, er_vector)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+
+    f1 = constantF * norm + f0
+    f2 = constantF * norm + f0
+    f3 = constantF * norm + f0
+    f4 = 0
+    f5 = -constantF * norm - f0
+
+
+
+
+    kp1 = []
+    kv1 = []
+    ki1 = []
+
+    kp2 = []
+    kv2 = []
+    ki2 = []
+
+    for i in range(len(gain1)):
+        Kp, Kv, Ki = gain1[i]
+        kp1.append(Kp)
+        kv1.append(Kv)
+        ki1.append(Ki)
+
+    for i in range(len(gain2)):
+        Kp, Kv, Ki = gain2[i]
+        kp2.append(Kp)
+        kv2.append(Kv)
+        ki2.append(Ki)
+
+
+    if norm > eps:
+        tau1 = kp1[0] * (Jt_polar[0][0] * (Rd - R) + Jt_polar[0][1] * (Phid - Phi))
+        tau2 = kp1[1] * (Jt_polar[1][0] * (Rd - R) + Jt_polar[1][1] * (Phid - Phi))
+        tau3 = kp1[2] * (Jt_polar[2][0] * (Rd - R) + Jt_polar[2][1] * (Phid - Phi))
+
+        tau4 = 0
+        tau5 = kp1[4] * (Jt_polar[4][0] * (Rd - R) + Jt_polar[4][1] * (Phid - Phi))
+
+        f1, f2, f3, f5 = 0, 0, 0, 0
+        tauf1 = f1 * Jt_polar[0][0]
+        tauf2 = f2 * Jt_polar[1][0]
+        tauf3 = f3 * Jt_polar[2][0]
+        tauf4 = f4 * Jt_polar[3][0]
+        tauf5 = f5 * Jt_polar[4][0]
+
+
+
+    else:
+        tauf1 = f1 * Jt_polar[0][0]
+        tauf2 = f2 * Jt_polar[1][0]
+        tauf3 = f3 * Jt_polar[2][0]
+        tauf4 = f4 * Jt_polar[3][0]
+        tauf5 = f5 * Jt_polar[4][0]
+
+        tau1 = kp2[0] * (Jt_polar[0][0] * (Rd - R) + Jt_polar[0][1] * (Phid - Phi)) + tauf1
+        tau2 = kp2[1] * (Jt_polar[1][0] * (Rd - R) + Jt_polar[1][1] * (Phid - Phi)) + tauf2
+        tau3 = kp2[2] * (Jt_polar[2][0] * (Rd - R) + Jt_polar[2][1] * (Phid - Phi)) + tauf3
+
+        tau4 = 0
+        tau5 = tauf5
+
+    Tau = [tau1, tau2, tau3, tau4, tau5]
+    tauf = [tauf1, tauf2, tauf3, tauf4, tauf5]
+
+    f = [f1, f2, f3, f5]
+
+    return Tau, f, tauf
 
 
 def new_PID_position_control_4dof_PID(gain, dot_theta, Xd, X, Jt, sum_X,
@@ -1192,7 +1268,12 @@ def input_forces_4dof(l, q, dot_q, h, D, K, Jt,
     f = [f1, f2, f3, f4, f5]
     A = [A1, A2]
 
-    return f, A
+    Tauff = [K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy), K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy),
+             K[2] + (Jt[2][0] * Fx + Jt[2][1] * Fy), (Jt[3][0] * Fx + Jt[3][1] * Fy),
+             K[4] + (Jt[4][0] * Fx + Jt[4][1] * Fy)]
+
+
+    return f, A, Tauff
 
 
 def out_forces(x, max_force=10, bias=1):
@@ -1353,6 +1434,16 @@ def print_non_lineaar_Characteristics():
     pr.print_graph("Non Linear Characteristics",
                    x_data, yd, label_name, "X", "K", 4)
     plt.show()
+
+
+def out_force(f, time):
+    if time > 15:
+        F = 0
+
+    else:
+        F = f
+
+    return F
 
 
 def simulation_time(count_time, sampling_time):

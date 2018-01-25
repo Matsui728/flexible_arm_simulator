@@ -96,9 +96,9 @@ def make_data_log_list(data_list, input_data_list):
 
 
 def move_excel_data(data_root=root_dir):
-    file_name = ['3dof_simulation_link_data.csv',
-                 '3dof_simulation_motor_data.csv',
-                 '3dof_simulation_position_data.csv',
+    file_name = ['4dof_simulation_link_data.csv',
+                 '4dof_simulation_motor_data.csv',
+                 '4dof_simulation_position_data.csv',
                  'Parameter_data.txt',
                  'result.png']
 
