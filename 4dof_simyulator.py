@@ -36,12 +36,12 @@ if __name__ == '__main__':
     arm1_lg = [lg[0], lg[1], lg[2]]
     arm2_lg = [lg[3], lg[4]]
 
-    D = 0.4  # リンク粘性
+    D = 1.0  # リンク粘性
     g = 9.8  # 重力加速度
 
     # Prametas of motor
     Mm = 34.7*pow(10, -7)       # モータの慣性モーメント
-    B = 0.00001  # モータの粘性
+    B = 0.0011781341180018513 # モータの粘性
 
     # 慣性モーメント
     Inertia = []
@@ -164,8 +164,8 @@ if __name__ == '__main__':
 
     circle_data = []
 
-    k11 = 40
-    k21 = 800
+    k11 = 10
+    k21 = 2
 
     # Non linear character Parametas
     k1 = sl.non_linear_parameta(k11, k21)
@@ -176,15 +176,18 @@ if __name__ == '__main__':
 
     k = [k1, k2, k3, k4, k5]
 
+    # Gearratio
+    N = 1
+
     # Time Parametas
-    simulate_time = 15.0     # シミュレート時間
+    simulate_time = 100.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
     # Deseired Position
-    xd = 0.0
+    xd = 0.4
     yd = 0.4
-    thetaqq = radians(90)
+    thetaqq = radians(45)
     qd, thetaqd = ik.make_intial_angle(xd, yd, link1, link2, thetaqq)
     Rd = sqrt(pow(xd, 2) + pow(yd, 2))
     phid = radians(atan2(yd, xd))
@@ -331,11 +334,11 @@ if __name__ == '__main__':
         # 拘束力とダイナミクス右辺の計算
         dot_P, P, dot_Q, Q = sl.restraint_item(ll, q, dot_q)
 
-        Fx = sl.out_force(0.5, time)
+        Fx = sl.out_force(0, time)
 
         f, A, Tauff = sl.input_forces_4dof(ll, q, dot_q, H, D, K,
-                                           Jt, P, Q, dot_P, dot_Q, 0,
-                                           0, s=5)
+                                           Jt, P, Q, dot_P, dot_Q, N,
+                                           0, 0, 10)
 
         # 関節角加速度の計算
         ddot_q = sl.angular_acceleration_4dof(invPhi, f, A)
@@ -345,7 +348,7 @@ if __name__ == '__main__':
 
         # モータ角加速度の計算
         ddot_theta = sl.motor_angular_acceleration(Mm, Tau, B,
-                                                   dot_theta, K)
+                                                   dot_theta, K, N)
 
         C = sl.make_circle(eps1, time, xd, yd)
 
@@ -521,8 +524,8 @@ if __name__ == '__main__':
     plt.subplot(525)
     pr.print_graph_beta(title_name[4], xyx_data, xyy_data, label_name[6],
                         xlabel_name[1], ylabel_name[3], num_plot_data=3)
-    plt.xlim(-0.2, 0.2)
-    plt.ylim(0.2, 0.6)
+    plt.xlim(-0.6, 0.6)
+    plt.ylim(0.0, 0.6)
 
     plt.subplot(526)
 

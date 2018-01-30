@@ -18,26 +18,37 @@ if __name__ == '__main__':
     ll = [0.3]  # リンク長
     lg = [ll[0] / 2]   # 重心位置
     m = [0.3]
+    Mm = 34.7*pow(10, -7)       # モータの慣性モーメント
 
-    D = 0.4   # リンク粘性
+    D = 1.0   # リンク粘性
+    B = 0.0011781341180018513 # モータ粘性
     g = 9.8  # 重力加速度
+    Kf = 0.00
 
     Inertia = []
     Inertia = sl.link_inertia(m, ll, Inertia)
 
     # ロボット初期値
-    theta = [0.0]
+    theta = [radians(0.0)]
+    thetad = radians(10)
+    dot_theta = [0.0]
+    ddot_theta = [0.0]
+
     q = [radians(0.0)]
     dot_q = [0]
     ddot_q = [0]
 
-    k1 = 40
-    k2 = 800
-
+    k1 = 10
+    k2 = 2000
     k11 = sl.non_linear_parameta(k1, k2)
-
     k = [k11]
-    tauf = 10    # 外乱トルク
+
+    kp = 10000000
+    kv = 10000000
+
+    tauf = 0  # 外乱トルク
+
+    Gear_ratio = 5
 
     A = m[0] * pow(lg[0], 2) + Inertia[0]
 
@@ -46,22 +57,30 @@ if __name__ == '__main__':
     K_data = []
 
     # Time Parametas
-    simulate_time = 2.0     # シミュレート時間
+    simulate_time = 200.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
+
     ST = int(sl.simulation_time(simulate_time, sampling_time))
 
     for i in tqdm(range(ST)):
         time = i*sampling_time  # 時間の設定
 
         q, dot_q, ddot_q = sl.EulerMethod(q, dot_q, ddot_q, sampling_time)
+        theta, dot_theta, ddot_theta = sl.EulerMethod(theta, dot_theta,
+                                                      ddot_theta,
+                                                      sampling_time)
+
+        tau = kp * (thetad - theta[0]) - kv * dot_theta[0]
 
         # 偏差と非線形弾性特性値の計算
         e = sl.difference_part(theta, q)
         K = sl.non_linear_item(k, e)
 
-        # 各加速度計算
-        ddot_q[0] = (K[0] + tauf - D * dot_q[0]) / A
+        # 各角加速度計算
+
+        ddot_q[0] = (Gear_ratio * K[0] + tauf - D * dot_q[0]) / A
+        ddot_theta[0] = (tau - K[0] - pow(Gear_ratio, 2) * B * dot_theta[0]) / pow(Gear_ratio, 2) * Mm
 
         # Save time log
         time_log = pr.save_part_log(time, time_log)
@@ -69,7 +88,7 @@ if __name__ == '__main__':
         q_data = pr.save_part_log(degrees(q[0]), q_data)
         qdata = [q_data]
         dot_q_data = pr.save_part_log(degrees(dot_q[0]), dot_q_data)
-#        ddot_q_data = pr.save_part_log(degrees(ddot_q[0]), ddot_q_data)
+        ddot_q_data = pr.save_part_log(degrees(ddot_q[0]), ddot_q_data)
 
     title_name = ['Link angle']
     label_name = ['q']

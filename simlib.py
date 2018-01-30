@@ -653,8 +653,8 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
         kv2.append(Kv)
         ki2.append(Ki)
 
-    kps = 0.1
-    kvs = 0.001
+    kps = 1
+    kvs = 0.000
 
     if norm > eps:
         tau1 = kp1[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
@@ -996,10 +996,10 @@ def angular_acceleration_4dof(inv_phi, f, A):
 
     return ddot_q
 
-def motor_angular_acceleration(Mm, tau, B, dot_theta, F):
+def motor_angular_acceleration(Mm, tau, B, dot_theta, F, N=1):
     ddot_theta_data = []
     for i in range(len(tau)):
-        ddot_theta = (tau[i] - B*dot_theta[i] - F[i])/Mm
+        ddot_theta = (tau[i] - B*dot_theta[i] - (F[i]/N))/Mm
         ddot_theta_data.append(ddot_theta)
 
     return ddot_theta_data
@@ -1239,11 +1239,11 @@ def restraint_item(l, q, dot_q):
 
 
 def input_forces(l, q, dot_q, h, D, K, Jt,
-                 P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=1):
-    f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0] - D * dot_q[0]
-    f2 = K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[1] - D * dot_q[1]
-    f3 = K[2] + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[2] - D * dot_q[2]
-    f4 = K[3] + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[3] - D * dot_q[3]
+                 P, Q, dot_P, dot_Q, N=1, Fx=0, Fy=0, s=1):
+    f1 = K[0]/N + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0] - D * dot_q[0]
+    f2 = K[1]/N + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[1] - D * dot_q[1]
+    f3 = K[2]/N + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[2] - D * dot_q[2]
+    f4 = K[3]/N + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[3] - D * dot_q[3]
 
     A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
     A2 = -2 * s * dot_Q - s * s * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * sin(q[2]) * dot_q[2] * dot_q[2] - l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
@@ -1255,12 +1255,12 @@ def input_forces(l, q, dot_q, h, D, K, Jt,
 
 
 def input_forces_4dof(l, q, dot_q, h, D, K, Jt,
-                      P, Q, dot_P, dot_Q, Fx=0, Fy=0, s=10):
-    f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0][0] - D * dot_q[0]
-    f2 = K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[0][1] - D * dot_q[1]
-    f3 = K[2] + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[0][2] - D * dot_q[2]
+                      P, Q, dot_P, dot_Q, N, Fx=0, Fy=0, s=10):
+    f1 = K[0]/N + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0][0] - D * dot_q[0]
+    f2 = K[1]/N + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[0][1] - D * dot_q[1]
+    f3 = K[2]/N + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[0][2] - D * dot_q[2]
     f4 = (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[1][0] - D * dot_q[3]
-    f5 = K[4] + (Jt[4][0] * Fx + Jt[4][1] * Fy) - h[1][1] - D * dot_q[4]
+    f5 = K[4]/N + (Jt[4][0] * Fx + Jt[4][1] * Fy) - h[1][1] - D * dot_q[4]
 
     A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) + l[2] * cos(q[0] + q[1] + q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) - l[3] * cos(q[3]) * dot_q[3] * dot_q[3] - l[4] * cos(q[3] + q[4]) * (dot_q[3] + dot_q[4]) * (dot_q[3] + dot_q[4])
     A2 = -2 * s * dot_Q - s * s * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) + l[2] * sin(q[0] + q[1] + q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) - l[3] * sin(q[3]) * dot_q[3] * dot_q[3] - l[4] * sin(q[3] + q[4]) * (dot_q[3] + dot_q[4]) * (dot_q[3] + dot_q[4])
