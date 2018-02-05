@@ -59,11 +59,11 @@ def make_intial_angle(x, y, l1, l2, theta0):
 
 
 if __name__ == '__main__':
-    theta = radians(45)
+    theta = radians(90)
     l1 = [0.3, 0.3, 0.1]
     l2 = [0.35, 0.35]
-    x = 0.3
-    y = 0.3
+    x = 0.0
+    y = 0.4
 
     thetas1 = cul_inverse_kinematics_3dof(x, y, l1, theta)
     thetas2 = cul_inverse_kinematics_2dof(x, y, l2)

@@ -21,10 +21,11 @@ def Mechanical_friction(kp, Mm):
 
 if __name__ == '__main__':
     Mm = 34.7*pow(10, -7)       # モータの慣性モーメント
+    N = 50
     zeta = 1
 
-    kp = 0.1
-    kv = 0.000
+    kp = 1
+    kv = 0.0
 
     k1 = 10
     k2 = 2000
@@ -33,10 +34,10 @@ if __name__ == '__main__':
 
 #    K = Mechanical_friction(kp, Mm)
     K = k1
-    D = 2 * zeta * sqrt(Mm*kp)
+    D = 2 * zeta * sqrt(Mm * kp)
     zeta1 = (D + kv) / 2 / sqrt(Mm*kp)
 
-    omegan = sqrt(kp/Mm)
+    omegan = sqrt(kp/ N * Mm)
 
     print('kp = ' + str(kp))
     print('kv = ' + str(kv))

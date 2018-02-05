@@ -7,13 +7,15 @@ Created on Mon Oct 30 15:49:51 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import degrees, radians, sin, cos, atan2, sqrt
+import configparser
 import print_result as pr
 import simlib as sl
-from tqdm import tqdm
-import configparser
-
 import inverse_kinematics as ik
+from tqdm import tqdm
+from math import degrees, radians, sin, cos, atan2, sqrt
+from random import uniform
+
+
 
 # データログ保存パス
 cp = configparser.ConfigParser()
@@ -23,7 +25,7 @@ root_dir = cp.get('dataset_dir', 'dir_path')
 
 if __name__ == '__main__':
     # Parameters
-    m = [0.3, 0.3, 0.1, 0.3, 0.3]  # 質量
+    m = [2, 2, 1, 2, 2]  # 質量
     arm1_m = [m[0], m[1], m[2]]
     arm2_m = [m[3], m[4]]
 
@@ -36,12 +38,16 @@ if __name__ == '__main__':
     arm1_lg = [lg[0], lg[1], lg[2]]
     arm2_lg = [lg[3], lg[4]]
 
-    D = 1.0  # リンク粘性
+    D = 3.0  # リンク粘性
     g = 9.8  # 重力加速度
+
+
+    # Gearratio
+    N = 50
 
     # Prametas of motor
     Mm = 34.7*pow(10, -7)       # モータの慣性モーメント
-    B = 0.0011781341180018513 # モータの粘性
+    B = 0.0037255872020394314 # モータの粘性
 
     # 慣性モーメント
     Inertia = []
@@ -59,11 +65,11 @@ if __name__ == '__main__':
     gain1 = [control_gain1, control_gain2, control_gain3,
             control_gain4, control_gain5]
 
-    control_gain1 = sl.imput_gain(0, 0.00, 0)
-    control_gain2 = sl.imput_gain(0, 0.00, 0)
-    control_gain3 = sl.imput_gain(0, 0.00, 0)
-    control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
-    control_gain5 = sl.imput_gain(0, 0.00, 0)
+    control_gain1 = sl.imput_gain(0, 0.00, 200)
+    control_gain2 = sl.imput_gain(0, 0.00, 200)
+    control_gain3 = sl.imput_gain(0, 0.00, 200)
+    control_gain4 = sl.imput_gain(0.0, 0.0, 200.0)
+    control_gain5 = sl.imput_gain(0, 0.00, 200)
     gain2 = [control_gain1, control_gain2, control_gain3,
              control_gain4, control_gain5]
 
@@ -74,6 +80,8 @@ if __name__ == '__main__':
 
     q, theta = ik.make_intial_angle(x0, y0, link1, link2, Theta)  # 初期角度
 
+    theta = [N*theta[0], N*theta[1], N*theta[2],
+             N*theta[3], N*theta[4]]
     # Link data
     dot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
     ddot_q = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -111,7 +119,7 @@ if __name__ == '__main__':
 
     # Input force
     f1_data, f2_data, f3_data, f5_data = [], [], [], []
-    Fconstant = 0
+    Fconstant = 100
     force_gain = 0.0
     actf = []
 
@@ -153,6 +161,18 @@ if __name__ == '__main__':
     (ddot_theta1_data, ddot_theta2_data,
      ddot_theta3_data, ddot_theta4_data, ddot_theta5_data) = [], [], [], [], []
 
+    (theta21_data, theta22_data, theta23_data,
+     theta24_data, theta25_data) = [], [], [], [], []
+
+    (thetad21_data, thetad22_data, thetad23_data,
+     thetad24_data, thetad25_data) = [], [], [], [], []
+
+    (dot_theta21_data, dot_theta22_data,
+     dot_theta23_data, dot_theta24_data, dot_theta25_data) = [], [], [], [], []
+
+    (ddot_theta21_data, ddot_theta22_data,
+     ddot_theta23_data, ddot_theta24_data, ddot_theta25_data) = [], [], [], [], []
+
     (sum_theta1_data, sum_theta2_data,
      sum_theta3_data, sum_theta4_data, sum_theta4_data) = [], [], [], [], []
 
@@ -165,7 +185,7 @@ if __name__ == '__main__':
     circle_data = []
 
     k11 = 10
-    k21 = 2
+    k21 = 2000
 
     # Non linear character Parametas
     k1 = sl.non_linear_parameta(k11, k21)
@@ -176,11 +196,23 @@ if __name__ == '__main__':
 
     k = [k1, k2, k3, k4, k5]
 
-    # Gearratio
-    N = 1
+    # K Errored
+    # +-5%誤差
+    k11_error = uniform(9.5, 10.5)
+    k21_error = uniform(1900, 2100)
+
+    k1_error = sl.non_linear_parameta(9.5, 2100)
+    k2_error = sl.non_linear_parameta(10.5, 1900)
+    k3_error = sl.non_linear_parameta(10,2000)
+    k4_error = sl.non_linear_parameta(10,2500)
+    k5_error = sl.non_linear_parameta(9, 1900)
+
+    k_error = [k1_error, k2_error, k3_error,
+               k4_error, k5_error]
+
 
     # Time Parametas
-    simulate_time = 100.0     # シミュレート時間
+    simulate_time = 10.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
@@ -319,24 +351,32 @@ if __name__ == '__main__':
         sum_r = sl.sum_position_difference(sum_r, Rd, R, sampling_time)
         sum_phi = sl.sum_position_difference(sum_phi, phid, phi, sampling_time)
         sum_polar = [sum_r, sum_phi]
+        sum_q[0] = sl.sum_position_difference(sum_q[0], qd[0], q[0], sampling_time)
+        sum_q[1] = sl.sum_position_difference(sum_q[1], qd[1], q[1], sampling_time)
+        sum_q[2] = sl.sum_position_difference(sum_q[2], qd[2], q[2], sampling_time)
+        sum_q[3] = sl.sum_position_difference(sum_q[3], qd[3], q[3], sampling_time)
+        sum_q[4] = sl.sum_position_difference(sum_q[4], qd[4], q[4], sampling_time)
 
+        sum_q = [sum_q[0], sum_q[1], sum_q[2], sum_q[3], sum_q[4]]
 #        Tau, actf, thetad = sl.PIDcontrol_polar(gain1, gain2, theta, dot_theta, Xd, position, Jt, Jt_polar,
 #                                                k, qd, Rd, R, phid, phi, phi1, phi2,
 #                                                force_gain, eps, Fconstant)
 
-        Tau, actf, thetad = sl.PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, position, Jt, k, qd,
+        Tau, actf, thetad = sl.PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta,
+                                                      Xd, position, Jt, k, qd, sum_q, N,
                                                       force_gain, eps, Fconstant)
 
         # 偏差と非線形弾性特性値の計算
-        e = sl.difference_part(theta, q)
+        e = sl.difference_part(theta, q, N)
         K = sl.non_linear_item(k, e)
+        K_error = sl.non_linear_item(k_error, e)
 
         # 拘束力とダイナミクス右辺の計算
         dot_P, P, dot_Q, Q = sl.restraint_item(ll, q, dot_q)
 
-        Fx = sl.out_force(0, time)
+        Fx = sl.out_force(10, time)
 
-        f, A, Tauff = sl.input_forces_4dof(ll, q, dot_q, H, D, K,
+        f, A, Tauff = sl.input_forces_4dof(ll, q, dot_q, H, D, K_error,
                                            Jt, P, Q, dot_P, dot_Q, N,
                                            0, 0, 10)
 
@@ -348,7 +388,7 @@ if __name__ == '__main__':
 
         # モータ角加速度の計算
         ddot_theta = sl.motor_angular_acceleration(Mm, Tau, B,
-                                                   dot_theta, K, N)
+                                                   dot_theta, K_error, N)
 
         C = sl.make_circle(eps1, time, xd, yd)
 
@@ -368,11 +408,11 @@ if __name__ == '__main__':
         time_log = pr.save_part_log(time, time_log)
 
         # Save K log
-        K_data1 = pr.save_part_log(K[0], K_data1)
-        K_data2= pr.save_part_log(K[1], K_data2)
-        K_data3 = pr.save_part_log(K[2], K_data3)
+        K_data1 = pr.save_part_log(K_error[0], K_data1)
+        K_data2= pr.save_part_log(K_error[1], K_data2)
+        K_data3 = pr.save_part_log(K_error[2], K_data3)
         K_data4 = pr.save_part_log(0, K_data4)
-        K_data5 = pr.save_part_log(K[4], K_data5)
+        K_data5 = pr.save_part_log(K_error[4], K_data5)
         non_liner_data = [K_data1, K_data2, K_data3, K_data4, K_data5]
 
         # Save link_data(radian)
@@ -449,7 +489,7 @@ if __name__ == '__main__':
 
         x2_data = pr.save_part_log(position2[0], x2_data)
         y2_data = pr.save_part_log(position2[1], y2_data)
-        p_data = [x_data, y_data, x2_data, y2_data, xd_data, yd_data]
+        p_data = [x_data, y_data, xd_data, yd_data]
 
         xyx_data = [x_data, xd_data, circlex_data]
         xyy_data = [y_data, yd_data, circley_data]
@@ -483,8 +523,7 @@ if __name__ == '__main__':
 
     label_name1 = ['Link1', 'Link2', 'Link3', 'Link4', 'Link5']
     label_name2 = ['Motor1', 'Motor2', 'Motor3', 'Motor4', 'Motor5']
-    label_name3 = ['X1 position', 'Y1 position',
-                   'X2 position', 'Y2 position',
+    label_name3 = ['X position', 'Y position',
                    'Xd position', 'Yd position']
     label_name4 = ['λx', 'λy']
     label_name5 = ["k1 = {}, k2 = {}". format(k1[0], k1[1])]
@@ -514,7 +553,7 @@ if __name__ == '__main__':
     plt.subplot(523)
     pr.print_graph(title_name[2], time_log, p_data,
                    label_name[2], xlabel_name[0], ylabel_name[1],
-                   num_plot_data=6)
+                   num_plot_data=4)
 
     plt.subplot(524)
     pr.print_graph(title_name[3], time_log, lam_data,
@@ -523,7 +562,7 @@ if __name__ == '__main__':
 
     plt.subplot(525)
     pr.print_graph_beta(title_name[4], xyx_data, xyy_data, label_name[6],
-                        xlabel_name[1], ylabel_name[3], num_plot_data=3)
+                        xlabel_name[1], ylabel_name[3], num_plot_data=2)
     plt.xlim(-0.6, 0.6)
     plt.ylim(0.0, 0.6)
 
@@ -575,4 +614,5 @@ if __name__ == '__main__':
 
     pr.move_excel_data()
     print('Tasks are completed!')
+    print("k1 = {}, k2 = {}". format(k11_error, k21_error))
 

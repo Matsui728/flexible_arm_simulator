@@ -17,10 +17,10 @@ if __name__ == '__main__':
     # パラメータ
     ll = [0.3]  # リンク長
     lg = [ll[0] / 2]   # 重心位置
-    m = [0.3]
+    m = [2]
     Mm = 34.7*pow(10, -7)       # モータの慣性モーメント
 
-    D = 1.0   # リンク粘性
+    D = 3.0   # リンク粘性
     B = 0.0011781341180018513 # モータ粘性
     g = 9.8  # 重力加速度
     Kf = 0.00
@@ -30,11 +30,11 @@ if __name__ == '__main__':
 
     # ロボット初期値
     theta = [radians(0.0)]
-    thetad = radians(10)
+    thetad1 = radians(10.0)
     dot_theta = [0.0]
     ddot_theta = [0.0]
 
-    q = [radians(0.0)]
+    q = [radians(30.0)]
     dot_q = [0]
     ddot_q = [0]
 
@@ -43,12 +43,14 @@ if __name__ == '__main__':
     k11 = sl.non_linear_parameta(k1, k2)
     k = [k11]
 
-    kp = 10000000
-    kv = 10000000
+    kp = 100
+    kv = 00
 
     tauf = 0  # 外乱トルク
 
-    Gear_ratio = 5
+    Gear_ratio = 100
+
+    thetad2 = Gear_ratio * thetad1
 
     A = m[0] * pow(lg[0], 2) + Inertia[0]
 
@@ -57,7 +59,7 @@ if __name__ == '__main__':
     K_data = []
 
     # Time Parametas
-    simulate_time = 200.0     # シミュレート時間
+    simulate_time = 3.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
@@ -67,20 +69,20 @@ if __name__ == '__main__':
         time = i*sampling_time  # 時間の設定
 
         q, dot_q, ddot_q = sl.EulerMethod(q, dot_q, ddot_q, sampling_time)
-        theta, dot_theta, ddot_theta = sl.EulerMethod(theta, dot_theta,
-                                                      ddot_theta,
-                                                      sampling_time)
+#        theta, dot_theta, ddot_theta = sl.EulerMethod(theta, dot_theta,
+#                                                      ddot_theta,
+#                                                      sampling_time)
 
-        tau = kp * (thetad - theta[0]) - kv * dot_theta[0]
+#        tau = kp * (thetad2 - theta[0]) - kv * dot_theta[0]
 
         # 偏差と非線形弾性特性値の計算
-        e = sl.difference_part(theta, q)
+        e = sl.difference_part(theta, q, Gear_ratio)
         K = sl.non_linear_item(k, e)
 
         # 各角加速度計算
 
-        ddot_q[0] = (Gear_ratio * K[0] + tauf - D * dot_q[0]) / A
-        ddot_theta[0] = (tau - K[0] - pow(Gear_ratio, 2) * B * dot_theta[0]) / pow(Gear_ratio, 2) * Mm
+        ddot_q[0] = (K[0] + tauf - D * dot_q[0]) / A
+#        ddot_theta[0] = (Gear_ratio * tau - K[0] - pow(Gear_ratio, 2) * B * dot_theta[0]) / pow(Gear_ratio, 2) / Mm
 
         # Save time log
         time_log = pr.save_part_log(time, time_log)

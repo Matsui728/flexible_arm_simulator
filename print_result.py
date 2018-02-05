@@ -60,10 +60,10 @@ def print_graph_beta(title_name, x_data, y_data,
 
 
 def save_angle_excel_log(time, q, qd, dot_q, ddot_q):
-    log_data = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n". format(time, degrees(q[0]), degrees(q[1]),
-                                                                                              degrees(q[2]), degrees(q[3]),
+    log_data = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n". format(time, degrees(q[0]), degrees(q[1]),
+                                                                                              degrees(q[2]), degrees(q[3]), degrees(q[4]),
                                                                                               degrees(qd[0]), degrees(qd[1]),
-                                                                                              degrees(qd[2]), degrees(qd[3]),
+                                                                                              degrees(qd[2]), degrees(qd[3]), degrees(qd[4]),
                                                                                               dot_q[0], dot_q[1], dot_q[2], dot_q[3],
                                                                                               ddot_q[0], ddot_q[1], ddot_q[2], ddot_q[3])
 

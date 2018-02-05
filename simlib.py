@@ -7,7 +7,7 @@ Created on Wed Sep  6 15:26:55 2017
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import sin, cos, pow, atan, sqrt
+from math import sin, cos, pow, atan, sqrt, radians
 import print_result as pr
 
 
@@ -609,28 +609,30 @@ def new_PID_position_control_4dof_try(gain, dot_theta, Xd, X, Jt, sum_X,
     return Tau, f
 
 
-def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
-                           constantF=0, eps=0.1, f0=0.0):
+def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd, sum_q,
+                           N, constantF=0, eps=0.1, f0=0.0):
 
     er_vector = normal_vector(Xd[0], Xd[1])
     Jdt = desired_jacobi_4dof(Jt, er_vector)
 
     norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
 
-    f1 = constantF * norm + f0
-    f2 = constantF * norm + f0
-    f3 = constantF * norm + f0
-    f4 = -constantF * norm - f0
-    f5 = -constantF * norm - f0
+    f1 = constantF * norm - f0
+    f2 = constantF * norm - f0
+    f3 = constantF * norm - f0
+    f4 = constantF * norm + f0
+    f5 = constantF * norm + f0
 
     tauf1 = f1 * Jdt[0]
     tauf2 = f2 * Jdt[1]
     tauf3 = f3 * Jdt[2]
-    tauf4 = 0
+    tauf4 = f4 * Jdt[3]
     tauf5 = f5 * Jdt[4]
 
     tauf = [tauf1, tauf2, tauf3, tauf4, tauf5]
     Thetad = deseired_theta(qd, tauf, K)
+    Thetad = [N * Thetad[0], N * Thetad[1], N*Thetad[2],
+              N * Thetad[3], N * Thetad[4]]
 
 
     kp1 = []
@@ -653,8 +655,8 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
         kv2.append(Kv)
         ki2.append(Ki)
 
-    kps = 1
-    kvs = 0.000
+    kps = 10
+    kvs = 0
 
     if norm > eps:
         tau1 = kp1[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
@@ -668,12 +670,12 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd,
 
     else:
 
-        tau1 = kp2[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + kps * (Thetad[0]-theta[0]) - kvs * dot_theta[0]
-        tau2 = kp2[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + kps * (Thetad[1]-theta[1]) - kvs * dot_theta[1]
-        tau3 = kp2[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + kps * (Thetad[2]-theta[2]) - kvs * dot_theta[2]
+        tau1 = ki2[0] * sum_q[0] + kp2[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + kps * (Thetad[0]-theta[0]) - kvs * dot_theta[0]
+        tau2 = ki2[1] * sum_q[1] + kp2[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + kps * (Thetad[1]-theta[1]) - kvs * dot_theta[1]
+        tau3 = ki2[2] * sum_q[2] + kp2[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + kps * (Thetad[2]-theta[2]) - kvs * dot_theta[2]
 
-        tau4 = 0
-        tau5 = kps * (Thetad[4]-theta[4]) - kvs * dot_theta[4]
+        tau4 = ki2[3] * sum_q[3] + kps * (Thetad[3]-theta[3]) - kvs * dot_theta[3]
+        tau5 = ki2[4] * sum_q[4] + kps * (Thetad[4]-theta[4]) - kvs * dot_theta[4]
 
     Tau = [tau1, tau2, tau3, tau4, tau5]
 
@@ -928,11 +930,11 @@ def desired_jacobi(Jt, normal_vector):
 
 
 def desired_jacobi_4dof(Jt, normal_vector):
-    Jdt1 = (Jt[0][0] * normal_vector[0] + Jt[0][1] * normal_vector[1])
-    Jdt2 = (Jt[1][0] * normal_vector[0] + Jt[1][1] * normal_vector[1])
-    Jdt3 = (Jt[2][0] * normal_vector[0] + Jt[2][1] * normal_vector[1])
-    Jdt4 = (Jt[3][0] * normal_vector[0] + Jt[3][1] * normal_vector[1])
-    Jdt5 = (Jt[4][0] * normal_vector[0] + Jt[4][1] * normal_vector[1])
+    Jdt1 = (Jt[0][0] * normal_vector[0]*sin(radians(45)) + Jt[0][1] * normal_vector[1]*cos(radians(45)))
+    Jdt2 = (Jt[1][0] * normal_vector[0]*sin(radians(45)) + Jt[1][1] * normal_vector[1]*cos(radians(45)))
+    Jdt3 = (Jt[2][0] * normal_vector[0]*sin(radians(45)) + Jt[2][1] * normal_vector[1]*cos(radians(45)))
+    Jdt4 = (Jt[3][0] * normal_vector[0]*sin(radians(45)) + Jt[3][1] * normal_vector[1]*cos(radians(45)))
+    Jdt5 = (Jt[4][0] * normal_vector[0]*sin(radians(45)) + Jt[4][1] * normal_vector[1]*cos(radians(45)))
     Jdt = [Jdt1, Jdt2, Jdt3, Jdt4, Jdt5]
 
     return Jdt
@@ -999,7 +1001,7 @@ def angular_acceleration_4dof(inv_phi, f, A):
 def motor_angular_acceleration(Mm, tau, B, dot_theta, F, N=1):
     ddot_theta_data = []
     for i in range(len(tau)):
-        ddot_theta = (tau[i] - B*dot_theta[i] - (F[i]/N))/Mm
+        ddot_theta = (N * tau[i] - pow(N, 2) * B * dot_theta[i] - F[i])/ (pow(N, 2)*Mm)
         ddot_theta_data.append(ddot_theta)
 
     return ddot_theta_data
@@ -1198,10 +1200,10 @@ def gravity_item_2dof(m1, m2, l1, lg1, lg2, q1, q2, g):
     return g1, g2
 
 
-def difference_part(theta, q):
+def difference_part(theta, q, gear_ratio):
     e_data = []
     for i in range(len(theta)):
-        e = (theta[i] - q[i])
+        e = (theta[i]/gear_ratio - q[i])
         e_data.append(e)
 
     return e_data
@@ -1240,10 +1242,10 @@ def restraint_item(l, q, dot_q):
 
 def input_forces(l, q, dot_q, h, D, K, Jt,
                  P, Q, dot_P, dot_Q, N=1, Fx=0, Fy=0, s=1):
-    f1 = K[0]/N + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0] - D * dot_q[0]
-    f2 = K[1]/N + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[1] - D * dot_q[1]
-    f3 = K[2]/N + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[2] - D * dot_q[2]
-    f4 = K[3]/N + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[3] - D * dot_q[3]
+    f1 = K[0] * N + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0] - D * dot_q[0]
+    f2 = K[1] * N + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[1] - D * dot_q[1]
+    f3 = K[2] * N + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[2] - D * dot_q[2]
+    f4 = K[3] * N + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[3] - D * dot_q[3]
 
     A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
     A2 = -2 * s * dot_Q - s * s * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * sin(q[2]) * dot_q[2] * dot_q[2] - l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
@@ -1256,11 +1258,11 @@ def input_forces(l, q, dot_q, h, D, K, Jt,
 
 def input_forces_4dof(l, q, dot_q, h, D, K, Jt,
                       P, Q, dot_P, dot_Q, N, Fx=0, Fy=0, s=10):
-    f1 = K[0]/N + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0][0] - D * dot_q[0]
-    f2 = K[1]/N + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[0][1] - D * dot_q[1]
-    f3 = K[2]/N + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[0][2] - D * dot_q[2]
-    f4 = (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[1][0] - D * dot_q[3]
-    f5 = K[4]/N + (Jt[4][0] * Fx + Jt[4][1] * Fy) - h[1][1] - D * dot_q[4]
+    f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0][0] - D * dot_q[0]
+    f2 = K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[0][1] - D * dot_q[1]
+    f3 = K[2] + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[0][2] - D * dot_q[2]
+    f4 = K[3] + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[1][0] - D * dot_q[3]
+    f5 = K[4] + (Jt[4][0] * Fx + Jt[4][1] * Fy) - h[1][1] - D * dot_q[4]
 
     A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) + l[2] * cos(q[0] + q[1] + q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) - l[3] * cos(q[3]) * dot_q[3] * dot_q[3] - l[4] * cos(q[3] + q[4]) * (dot_q[3] + dot_q[4]) * (dot_q[3] + dot_q[4])
     A2 = -2 * s * dot_Q - s * s * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) + l[2] * sin(q[0] + q[1] + q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) - l[3] * sin(q[3]) * dot_q[3] * dot_q[3] - l[4] * sin(q[3] + q[4]) * (dot_q[3] + dot_q[4]) * (dot_q[3] + dot_q[4])
