@@ -32,8 +32,8 @@ def cul_inverse_kinematics_2dof(x, y, l):
     a = (pow(x, 2) + pow(y, 2) + pow(l[0], 2) - pow(l[1], 2)) / (2 * l[0])
     b = (pow(x, 2) + pow(y, 2) - pow(l[0], 2) + pow(l[1], 2)) / (2 * l[1])
 
-    c = x*x + y*y - a*a
-    d = x*x + y*y - b*b
+    c = pow(x, 2) + pow(y, 2) - pow(a, 2)
+    d = pow(x, 2) + pow(y, 2) - pow(b, 2)
 
     theta1 = atan2(y, x) + atan2(sqrt(c), a)
     theta2 = -atan2((sqrt(c)), a) - atan2(sqrt(d), b)
@@ -53,6 +53,20 @@ def make_intial_angle(x, y, l1, l2, theta0):
     q = [radians(q1[0]), radians(q1[1]), radians(q1[2]),
          radians(q2[0]), radians(q2[1])]
     theta = [radians(theta1[0]), radians(theta1[1]), radians(theta1[2]),
+             radians(theta2[0]), radians(theta2[1])]
+
+    return q, theta
+
+
+def make_intial_angle_2dof(x1, y1, x2, y2, l1, l2):
+    q1 = cul_inverse_kinematics_2dof(x1, y1, l1)
+    q2 = cul_inverse_kinematics_2dof(x2, y2, l2)
+    theta1 = cul_inverse_kinematics_2dof(x1, y1, l1)
+    theta2 = cul_inverse_kinematics_2dof(x2, y2, l2)
+
+    q = [radians(q1[0]), radians(q1[1]),
+         radians(q2[0]), radians(q2[1])]
+    theta = [radians(theta1[0]), radians(theta1[1]),
              radians(theta2[0]), radians(theta2[1])]
 
     return q, theta

@@ -684,6 +684,79 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd, sum
     return Tau, f, Thetad
 
 
+def PIDcontrol_eforce_base_3dof(gain1, gain2, theta, dot_theta, Xd, X, Jt,
+                                K, qd, sum_q, N, constantF=0, eps=0.1, f0=0.0):
+
+    er_vector = normal_vector(Xd[0], Xd[1])
+    Jdt = desired_jacobi(Jt, er_vector)
+
+    norm = difference_norm(X[0], X[1], Xd[0], Xd[1])
+
+    f1 = constantF * norm + f0
+    f2 = constantF * norm + f0
+
+    f3 = constantF * norm - f0
+    f4 = constantF * norm - f0
+
+    tauf1 = f1 * Jdt[0]
+    tauf2 = f2 * Jdt[1]
+
+    tauf3 = 0
+    tauf4 = f4 * Jdt[3]
+
+    tauf = [tauf1, tauf2, tauf3, tauf4]
+    Thetad = deseired_theta(qd, tauf, K)
+    Thetad = [N * Thetad[0], N * Thetad[1], N*Thetad[2],
+              N * Thetad[3]]
+
+
+    kp1 = []
+    kv1 = []
+    ki1 = []
+
+    kp2 = []
+    kv2 = []
+    ki2 = []
+
+    for i in range(len(gain1)):
+        Kp, Kv, Ki = gain1[i]
+        kp1.append(Kp)
+        kv1.append(Kv)
+        ki1.append(Ki)
+
+    for i in range(len(gain2)):
+        Kp, Kv, Ki = gain2[i]
+        kp2.append(Kp)
+        kv2.append(Kv)
+        ki2.append(Ki)
+
+    kps = 10
+    kvs = 0.1
+
+    if norm > eps:
+        tau1 = kp1[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
+        tau2 = kp1[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
+
+        tau3 = 0
+        tau4 = kp1[3] * (Jt[3][0] * (Xd[0] - X[0]) + Jt[3][1] * (Xd[1] - X[1]))
+
+        f1, f2, f4 = 0, 0, 0
+
+    else:
+
+        tau1 = ki2[0] * sum_q[0] + kp2[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + kps * (Thetad[0]-theta[0]) - kvs * dot_theta[0]
+        tau2 = ki2[1] * sum_q[1] + kp2[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + kps * (Thetad[1]-theta[1]) - kvs * dot_theta[1]
+
+        tau3 = 0
+        tau4 = ki2[3] * sum_q[3] + kps * (Thetad[3]-theta[3]) - kvs * dot_theta[3]
+
+    Tau = [tau1, tau2, tau3, tau4]
+
+    f = [f1, f2, f4]
+
+    return Tau, f, Thetad
+
+
 
 def PIDcontrol_polar(gain1, gain2, theta, dot_theta, Xd, X, Jt, Jt_polar,
                      K, qd, Rd, R, Phid, Phi, Phi1, Phi2,
@@ -1242,10 +1315,10 @@ def restraint_item(l, q, dot_q):
 
 def input_forces(l, q, dot_q, h, D, K, Jt,
                  P, Q, dot_P, dot_Q, N=1, Fx=0, Fy=0, s=1):
-    f1 = K[0] * N + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0] - D * dot_q[0]
-    f2 = K[1] * N + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[1] - D * dot_q[1]
-    f3 = K[2] * N + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[2] - D * dot_q[2]
-    f4 = K[3] * N + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[3] - D * dot_q[3]
+    f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0] - D * dot_q[0]
+    f2 = K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[1] - D * dot_q[1]
+    f3 =   (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[2] - D * dot_q[2]
+    f4 = K[3] + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[3] - D * dot_q[3]
 
     A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * cos(q[2]) * dot_q[2] * dot_q[2] - l[3] * cos(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
     A2 = -2 * s * dot_Q - s * s * Q + l[0] * sin(q[0]) * dot_q[0] * dot_q[0] + l[1] * sin(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) - l[2] * sin(q[2]) * dot_q[2] * dot_q[2] - l[3] * sin(q[2] + q[3]) * (dot_q[2] + dot_q[3]) * (dot_q[2] + dot_q[3])
@@ -1253,7 +1326,10 @@ def input_forces(l, q, dot_q, h, D, K, Jt,
     f = [f1, f2, f3, f4]
     A = [A1, A2]
 
-    return f, A
+    Tauff = [K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy), K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy),
+             0, K[3] + (Jt[3][0] * Fx + Jt[3][1] * Fy)]
+
+    return f, A, Tauff
 
 
 def input_forces_4dof(l, q, dot_q, h, D, K, Jt,

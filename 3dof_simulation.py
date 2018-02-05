@@ -197,7 +197,7 @@ if __name__ == '__main__':
                                           Jt, dot_theta, sum_X)
 
         # 偏差と非線形弾性特性値の計算
-        e = sl.difference_part(theta, q)
+        e = sl.difference_part(theta, q, N)
 
         K = sl.non_linear_item(k, e)
 
