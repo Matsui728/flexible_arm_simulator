@@ -65,11 +65,11 @@ if __name__ == '__main__':
     gain1 = [control_gain1, control_gain2, control_gain3,
             control_gain4, control_gain5]
 
-    control_gain1 = sl.imput_gain(0, 0.00, 200)
-    control_gain2 = sl.imput_gain(0, 0.00, 200)
-    control_gain3 = sl.imput_gain(0, 0.00, 200)
-    control_gain4 = sl.imput_gain(0.0, 0.0, 200.0)
-    control_gain5 = sl.imput_gain(0, 0.00, 200)
+    control_gain1 = sl.imput_gain(0, 0.00, 700)
+    control_gain2 = sl.imput_gain(0, 0.00, 700)
+    control_gain3 = sl.imput_gain(0, 0.00, 700)
+    control_gain4 = sl.imput_gain(0.0, 0.0, 0.0)
+    control_gain5 = sl.imput_gain(0, 0.00, 700)
     gain2 = [control_gain1, control_gain2, control_gain3,
              control_gain4, control_gain5]
 
@@ -203,23 +203,23 @@ if __name__ == '__main__':
 
     k1_error = sl.non_linear_parameta(9.5, 2100)
     k2_error = sl.non_linear_parameta(10.5, 1900)
-    k3_error = sl.non_linear_parameta(10,2000)
-    k4_error = sl.non_linear_parameta(10,2500)
-    k5_error = sl.non_linear_parameta(9, 1900)
+    k3_error = sl.non_linear_parameta(10.5,2000)
+    k4_error = sl.non_linear_parameta(10.5,2100)
+    k5_error = sl.non_linear_parameta(9.5, 1900)
 
     k_error = [k1_error, k2_error, k3_error,
                k4_error, k5_error]
 
 
     # Time Parametas
-    simulate_time = 10.0     # シミュレート時間
+    simulate_time = 4.0     # シミュレート時間
     sampling_time = 0.001  # サンプリングタイム
     time_log = []
 
     # Deseired Position
-    xd = 0.4
-    yd = 0.4
-    thetaqq = radians(45)
+    xd = -0.3
+    yd = 0.3
+    thetaqq = radians(135)
     qd, thetaqd = ik.make_intial_angle(xd, yd, link1, link2, thetaqq)
     Rd = sqrt(pow(xd, 2) + pow(yd, 2))
     phid = radians(atan2(yd, xd))
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     lamx_data = []
     lamy_data = []
 
-    eps = 0.8  # 判定半径
+    eps = 0.3  # 判定半径
     eps1 = 0.05
     ST = int(sl.simulation_time(simulate_time, sampling_time))
 
@@ -376,7 +376,7 @@ if __name__ == '__main__':
 
         Fx = sl.out_force(10, time)
 
-        f, A, Tauff = sl.input_forces_4dof(ll, q, dot_q, H, D, K_error,
+        f, A, Tauff = sl.input_forces_4dof(ll, q, dot_q, H, D, K,
                                            Jt, P, Q, dot_P, dot_Q, N,
                                            0, 0, 10)
 
@@ -388,9 +388,9 @@ if __name__ == '__main__':
 
         # モータ角加速度の計算
         ddot_theta = sl.motor_angular_acceleration(Mm, Tau, B,
-                                                   dot_theta, K_error, N)
+                                                   dot_theta, K, N)
 
-        C = sl.make_circle(eps1, time, xd, yd)
+        C = sl.make_circle(eps, time, xd, yd)
 
         # エクセル用log_data保存
         link_data = pr.save_angle_excel_log(time, q, qd, dot_q, ddot_q)
@@ -409,7 +409,7 @@ if __name__ == '__main__':
 
         # Save K log
         K_data1 = pr.save_part_log(K_error[0], K_data1)
-        K_data2= pr.save_part_log(K_error[1], K_data2)
+        K_data2 = pr.save_part_log(K_error[1], K_data2)
         K_data3 = pr.save_part_log(K_error[2], K_data3)
         K_data4 = pr.save_part_log(0, K_data4)
         K_data5 = pr.save_part_log(K_error[4], K_data5)
@@ -428,7 +428,8 @@ if __name__ == '__main__':
         q3_data = pr.save_part_log(degrees(q[2]), q3_data)
         q4_data = pr.save_part_log(degrees(q[3]), q4_data)
         q5_data = pr.save_part_log(degrees(q[4]), q5_data)
-        q_data = [q1_data, q2_data, q3_data, q4_data, q5_data]
+        q_data = [q1_data, q2_data, q3_data, q4_data, q5_data,
+                  qd1_data, qd2_data, qd3_data, qd4_data, qd5_data]
 
         dot_q1_data = pr.save_part_log(dot_q[0], dot_q1_data)
         dot_q2_data = pr.save_part_log(dot_q[1], dot_q2_data)
@@ -461,7 +462,9 @@ if __name__ == '__main__':
         theta4_data = pr.save_part_log(degrees(theta[3]), theta4_data)
         theta5_data = pr.save_part_log(degrees(theta[4]), theta5_data)
         theta_data = [theta1_data, theta2_data, theta3_data,
-                      theta4_data, theta5_data]
+                      theta4_data, theta5_data,
+                      thetad1_data, thetad2_data, thetad3_data,
+                      thetad4_data, thetad5_data]
 
         dot_theta1_data = pr.save_part_log(dot_theta[0], dot_theta1_data)
         dot_theta2_data = pr.save_part_log(dot_theta[1], dot_theta2_data)
@@ -518,7 +521,7 @@ if __name__ == '__main__':
     # Print result
     title_name = ['Link angle', 'Motor angle',
                   'Time-Position', 'Restraining force', 'Position',
-                  'Non lineaar characteristics', 'Acting force',
+                  'Non linear characteristics', 'Acting force',
                   'θd data', 'qd data', 'K(θ-q) data']
 
     label_name1 = ['Link1', 'Link2', 'Link3', 'Link4', 'Link5']
@@ -531,13 +534,15 @@ if __name__ == '__main__':
     label_name7 = ['Trajectory', 'Desired Position', 'Working circle']
     label_name8 = ['θd1','θd2','θd3','θd4','θd5']
     label_name9 = ['qd1','qd2','qd3','qd4','qd5']
+    label_name10 = ['q1','q2','q3','q4','q5','qd1','qd2','qd3','qd4','qd5']
+    label_name11 = ['θ1','θ2','θ3','θ4','θ5', 'θd1','θd2','θd3','θd4','θd5']
 
     label_name = [label_name1, label_name2, label_name3, label_name4,
                   label_name5, label_name6, label_name7, label_name8,
-                  label_name9]
+                  label_name9, label_name10, label_name11]
 
     xlabel_name = ['Time[s]', 'X[m]', 'θ-q[rad]']
-    ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K[Nm]']
+    ylabel_name = ['Angle[deg]', 'Position[m]', 'Force [N]', 'Y[m]', 'K(θ-q)[Nm]']
 
     plt.figure(figsize=(11, 12))
     plt.subplot(521)

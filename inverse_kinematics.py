@@ -72,6 +72,38 @@ def make_intial_angle_2dof(x1, y1, x2, y2, l1, l2):
     return q, theta
 
 
+def plot_arm(l1, l2, theta1, theta2):
+    x1 = [0, l1[0]*cos(radians(theta1[0])),
+          l1[0]*cos(radians(theta1[0])) + l1[1]*cos((radians(theta1[0]+theta1[1]))),
+          l1[0]*cos(radians(theta1[0])) + l1[1]*cos((radians(theta1[0]+theta1[1]))) + l1[2]*cos(radians(theta1[0]+theta1[1]+theta1[2]))]
+    y1 = [0, l1[0]*sin(radians(theta1[0])),
+          l1[0]*sin(radians(theta1[0])) + l1[1]*sin((radians(theta1[0]+theta1[1]))),
+          l1[0]*sin(radians(theta1[0])) + l1[1]*sin((radians(theta1[0]+theta1[1]))) + l1[2]*sin(radians(theta1[0]+theta1[1]+theta1[2]))]
+
+    x2 = [0, l2[0]*cos(radians(theta2[0])),
+          l2[0]*cos(radians(theta2[0])) + l2[1]*cos((radians(theta2[0]+theta2[1])))]
+
+    y2 = [0, l2[0]*sin(radians(theta2[0])),
+          l2[0]*sin(radians(theta2[0])) + l2[1]*sin((radians(theta2[0]+theta2[1])))]
+
+    x0 = [0, x2[2]]
+    y0 = [0, y2[2]]
+
+    plt.figure(figsize=(5, 5))
+    plt.plot(x0, y0, "-c", lw=3, label="Radial straight line")
+    plt.plot(x1, y1, "-r", lw=3, label="arm1")
+    plt.plot(x2, y2, "-b", lw=3, label="arm2")
+    plt.plot(x1, y1, "or", lw=5, ms=5, label="joint1")
+    plt.plot(x2, y2, "ob", lw=5, ms=5, label="joint2")
+#    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
+    plt.xlim(-0.7, 0.7)
+    plt.ylim(-0.7, 0.7)
+
+    plt.grid()
+    plt.savefig('ex1.eps')
+    plt.show()
+
+
 if __name__ == '__main__':
     theta = radians(90)
     l1 = [0.3, 0.3, 0.1]
@@ -81,6 +113,7 @@ if __name__ == '__main__':
 
     thetas1 = cul_inverse_kinematics_3dof(x, y, l1, theta)
     thetas2 = cul_inverse_kinematics_2dof(x, y, l2)
+    plot_arm(l1, l2, thetas1, thetas2)
 
     print('{}, {}, {}\n'. format(thetas1[0], thetas1[1], thetas1[2]))
     print('{}, {}\n'. format(thetas2[0], thetas2[1]))

@@ -626,7 +626,7 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd, sum
     tauf1 = f1 * Jdt[0]
     tauf2 = f2 * Jdt[1]
     tauf3 = f3 * Jdt[2]
-    tauf4 = f4 * Jdt[3]
+    tauf4 = 0
     tauf5 = f5 * Jdt[4]
 
     tauf = [tauf1, tauf2, tauf3, tauf4, tauf5]
@@ -659,12 +659,24 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd, sum
     kvs = 0
 
     if norm > eps:
-        tau1 = kp1[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1]))
-        tau2 = kp1[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1]))
-        tau3 = kp1[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1]))
+        f1, f2, f3, f5 = 0, 0, 0, 0
+        tauf1 = f1 * Jdt[0]
+        tauf2 = f2 * Jdt[1]
+        tauf3 = f3 * Jdt[2]
+        tauf4 = 0
+        tauf5 = f5 * Jdt[4]
+
+        tauf = [tauf1, tauf2, tauf3, tauf4, tauf5]
+        Thetad = deseired_theta(qd, tauf, K)
+        Thetad = [N * Thetad[0], N * Thetad[1], N*Thetad[2],
+                  N * Thetad[3], N * Thetad[4]]
+
+        tau1 = ki2[0] * sum_q[0] + kp2[0] * (Jt[0][0] * (Xd[0] - X[0]) + Jt[0][1] * (Xd[1] - X[1])) + kps * (Thetad[0]-theta[0]) - kvs * dot_theta[0]
+        tau2 = ki2[1] * sum_q[1] + kp2[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + kps * (Thetad[1]-theta[1]) - kvs * dot_theta[1]
+        tau3 = ki2[2] * sum_q[2] + kp2[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + kps * (Thetad[2]-theta[2]) - kvs * dot_theta[2]
 
         tau4 = 0
-        tau5 = kp1[4] * (Jt[4][0] * (Xd[0] - X[0]) + Jt[4][1] * (Xd[1] - X[1]))
+        tau5 = ki2[4] * sum_q[4] + kps * (Thetad[4]-theta[4]) - kvs * dot_theta[4]
 
         f1, f2, f3, f5 = 0, 0, 0, 0
 
@@ -674,7 +686,7 @@ def PIDcontrol_eforce_base(gain1, gain2, theta, dot_theta, Xd, X, Jt, K, qd, sum
         tau2 = ki2[1] * sum_q[1] + kp2[1] * (Jt[1][0] * (Xd[0] - X[0]) + Jt[1][1] * (Xd[1] - X[1])) + kps * (Thetad[1]-theta[1]) - kvs * dot_theta[1]
         tau3 = ki2[2] * sum_q[2] + kp2[2] * (Jt[2][0] * (Xd[0] - X[0]) + Jt[2][1] * (Xd[1] - X[1])) + kps * (Thetad[2]-theta[2]) - kvs * dot_theta[2]
 
-        tau4 = ki2[3] * sum_q[3] + kps * (Thetad[3]-theta[3]) - kvs * dot_theta[3]
+        tau4 = 0
         tau5 = ki2[4] * sum_q[4] + kps * (Thetad[4]-theta[4]) - kvs * dot_theta[4]
 
     Tau = [tau1, tau2, tau3, tau4, tau5]
@@ -1337,7 +1349,7 @@ def input_forces_4dof(l, q, dot_q, h, D, K, Jt,
     f1 = K[0] + (Jt[0][0] * Fx + Jt[0][1] * Fy) - h[0][0] - D * dot_q[0]
     f2 = K[1] + (Jt[1][0] * Fx + Jt[1][1] * Fy) - h[0][1] - D * dot_q[1]
     f3 = K[2] + (Jt[2][0] * Fx + Jt[2][1] * Fy) - h[0][2] - D * dot_q[2]
-    f4 = K[3] + (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[1][0] - D * dot_q[3]
+    f4 = (Jt[3][0] * Fx + Jt[3][1] * Fy) - h[1][0] - D * dot_q[3]
     f5 = K[4] + (Jt[4][0] * Fx + Jt[4][1] * Fy) - h[1][1] - D * dot_q[4]
 
     A1 = -2 * s * dot_P - s * s * P + l[0] * cos(q[0]) * dot_q[0] * dot_q[0] + l[1] * cos(q[0] + q[1]) * (dot_q[0] + dot_q[1]) * (dot_q[0] + dot_q[1]) + l[2] * cos(q[0] + q[1] + q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) * (dot_q[0] + dot_q[1] + dot_q[2]) - l[3] * cos(q[3]) * dot_q[3] * dot_q[3] - l[4] * cos(q[3] + q[4]) * (dot_q[3] + dot_q[4]) * (dot_q[3] + dot_q[4])
