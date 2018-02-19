@@ -217,9 +217,9 @@ if __name__ == '__main__':
     time_log = []
 
     # Deseired Position
-    xd = -0.3
-    yd = 0.3
-    thetaqq = radians(135)
+    xd = 0
+    yd = 0.4
+    thetaqq = radians(90)
     qd, thetaqd = ik.make_intial_angle(xd, yd, link1, link2, thetaqq)
     Rd = sqrt(pow(xd, 2) + pow(yd, 2))
     phid = radians(atan2(yd, xd))
@@ -378,7 +378,7 @@ if __name__ == '__main__':
 
         f, A, Tauff = sl.input_forces_4dof(ll, q, dot_q, H, D, K,
                                            Jt, P, Q, dot_P, dot_Q, N,
-                                           0, 0, 10)
+                                           10, 0, 10)
 
         # 関節角加速度の計算
         ddot_q = sl.angular_acceleration_4dof(invPhi, f, A)
