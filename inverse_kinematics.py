@@ -91,25 +91,25 @@ def plot_arm(l1, l2, theta1, theta2):
 
     plt.figure(figsize=(5, 5))
     plt.plot(x0, y0, "-c", lw=3, label="Radial straight line")
-    plt.plot(x1, y1, "-r", lw=3, label="arm1")
     plt.plot(x2, y2, "-b", lw=3, label="arm2")
-    plt.plot(x1, y1, "or", lw=5, ms=5, label="joint1")
     plt.plot(x2, y2, "ob", lw=5, ms=5, label="joint2")
+    plt.plot(x1, y1, "-r", lw=3, label="arm1")
+    plt.plot(x1, y1, "or", lw=5, ms=5, label="joint1")
 #    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
     plt.xlim(-0.7, 0.7)
     plt.ylim(-0.7, 0.7)
 
     plt.grid()
-    plt.savefig('ex1.eps')
     plt.show()
 
 
 if __name__ == '__main__':
-    theta = radians(90)
+
     l1 = [0.3, 0.3, 0.1]
     l2 = [0.35, 0.35]
     x = 0.0
     y = 0.4
+    theta = atan2(y, x) - radians(90)
 
     thetas1 = cul_inverse_kinematics_3dof(x, y, l1, theta)
     thetas2 = cul_inverse_kinematics_2dof(x, y, l2)
