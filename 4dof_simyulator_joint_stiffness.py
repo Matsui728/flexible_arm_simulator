@@ -74,11 +74,11 @@ if __name__ == '__main__':
              control_gain4, control_gain5]
 
     # 初期姿勢
-    x0 = 0.1
-    y0 = 0.3
+    x0 = 0.0
+    y0 = 0.4
     Theta = atan2(y0,x0) -radians(90)
-    xd = 0.1
-    yd = 0.3
+    xd = 0.0
+    yd = 0.4
     thetaqq = atan2(yd,xd) -radians(90)
 
     q, theta = ik.make_intial_angle(x0, y0, link1, link2, Theta)  # 初期角度
@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
     # Input force
     f1_data, f2_data, f3_data, f5_data = [], [], [], []
-    Fconstant = 1
+    Fconstant = 100
     force_gain = 0.0
     actf = []
 
@@ -583,7 +583,7 @@ if __name__ == '__main__':
                    xlabel_name[1], ylabel_name[3], num_plot_data=8)
     plt.xlim(-0.6, 0.6)
     plt.ylim(-0.6, 0.6)
-
+    plt.savefig('result1.png')
     plt.show()
 
 

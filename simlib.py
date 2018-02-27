@@ -1475,11 +1475,11 @@ def jacobi_serial3dof(l, q):
 
 
 def jacobi_serial2dof(l, q):
-#    J1 = -l[0] * sin(q[0]) - l[1] * sin(q[0] + q[1])
-    J1 = 0
+    J1 = -l[0] * sin(q[0]) - l[1] * sin(q[0] + q[1])
+#    J1 = 0
     J2 = -l[1] * sin(q[0] + q[1])
-#    J3 = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1])
-    J3 = 0
+    J3 = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1])
+#    J3 = 0
     J4 = l[1] * cos(q[0] + q[1])
 
     J = [[J1, J2], [J3, J4]]

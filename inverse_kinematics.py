@@ -109,7 +109,7 @@ if __name__ == '__main__':
     l2 = [0.35, 0.35]
     x = 0.0
     y = 0.4
-    theta = atan2(y, x) - radians(90)
+    theta =50
 
     thetas1 = cul_inverse_kinematics_3dof(x, y, l1, theta)
     thetas2 = cul_inverse_kinematics_2dof(x, y, l2)
