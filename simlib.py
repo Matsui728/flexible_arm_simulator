@@ -1475,11 +1475,11 @@ def jacobi_serial3dof(l, q):
 
 
 def jacobi_serial2dof(l, q):
-#    J1 = -l[0] * sin(q[0]) - l[1] * sin(q[0] + q[1])
-    J1 = 0
+    J1 = -l[0] * sin(q[0]) - l[1] * sin(q[0] + q[1])
+#    J1 = 0
     J2 = -l[1] * sin(q[0] + q[1])
-#    J3 = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1])
-    J3 = 0
+    J3 = l[0] * cos(q[0]) + l[1] * cos(q[0] + q[1])
+#    J3 = 0
     J4 = l[1] * cos(q[0] + q[1])
 
     J = [[J1, J2], [J3, J4]]
@@ -1540,6 +1540,17 @@ def simulation_time(count_time, sampling_time):
     simulation_time = count_time/sampling_time
 
     return simulation_time
+
+
+def pseudo_inverse_matrix(A, At):
+    A = np.matrix(A)
+    At = np.matrix(At)
+    X = A.dot(At)
+    InvX = inverse_matrix(X)
+    Aseudo = InvX.dot(A)
+
+    return Aseudo
+
 
 
 if __name__ == '__main__':
