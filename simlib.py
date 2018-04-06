@@ -1542,6 +1542,17 @@ def simulation_time(count_time, sampling_time):
     return simulation_time
 
 
+def pseudo_inverse_matrix(A, At):
+    A = np.matrix(A)
+    At = np.matrix(At)
+    X = A.dot(At)
+    InvX = inverse_matrix(X)
+    Aseudo = InvX.dot(A)
+
+    return Aseudo
+
+
+
 if __name__ == '__main__':
     print_non_lineaar_Characteristics()
 
